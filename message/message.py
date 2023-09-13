@@ -33,6 +33,3 @@ class MessageCog(commands.Cog):
                 await ctx.send("You need to mention a user to send a message to.")
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
-
-def setup(bot):
-    bot.add_cog(MessageCog(bot))
