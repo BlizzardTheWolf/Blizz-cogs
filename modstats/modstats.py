@@ -8,80 +8,50 @@ class ModeratorStatsCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1234567890)  # Change identifier
-        self.config.register_guild(
-            mutes=[],
-            bans=[],
-            kicks=[],
-            warns=[]
-        )
 
-    async def log_action(self, guild, action_type):
-        timestamp = datetime.utcnow()
-        async with self.config.guild(guild).get_attr(action_type) as actions:
-            actions.append({"timestamp": timestamp})
+        default_guild_settings = {}
 
-    @commands.Cog.listener()
-    async def on_member_ban(self, guild, user):
-        await self.log_action(guild, "bans")
+        self.config.register_guild(**default_guild_settings)
 
-    @commands.Cog.listener()
-    async def on_member_unban(self, guild, user):
-        await self.log_action(guild, "unbans")
+    @commands.command()
+    @commands.has_permissions(manage_messages=True)
+    async def mute(self, ctx, user: discord.User, *, reason: str):
+        """Mute a user."""
+        # Your mute logic here
 
-    @commands.Cog.listener()
-    async def on_member_remove(self, member):
-        await self.log_action(member.guild, "kicks")
+        await self.log_action(ctx.guild, "mutes")
 
-    @commands.Cog.listener()
-    async def on_member_warn(self, member):
-        await self.log_action(member.guild, "warns")
+        await ctx.send(f"{user.mention} has been muted.")
 
-    async def get_action_counts(self, guild):
-        seven_days_ago = datetime.utcnow() - timedelta(days=7)
-        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+    @commands.command()
+    @commands.has_permissions(manage_messages=True)
+    async def warn(self, ctx, user: discord.User, *, reason: str):
+        """Warn a user."""
+        # Your warn logic here
 
-        mutes = await self.config.guild(guild).mutes()
-        bans = await self.config.guild(guild).bans()
-        kicks = await self.config.guild(guild).kicks()
-        warns = await self.config.guild(guild).warns()
+        await self.log_action(ctx.guild, "warns")
 
-        mutes_7_days = sum(1 for mute in mutes if mute["timestamp"] >= seven_days_ago)
-        mutes_30_days = sum(1 for mute in mutes if mute["timestamp"] >= thirty_days_ago)
-        mutes_all_time = len(mutes)
+        await ctx.send(f"{user.mention} has been warned.")
 
-        bans_7_days = sum(1 for ban in bans if ban["timestamp"] >= seven_days_ago)
-        bans_30_days = sum(1 for ban in bans if ban["timestamp"] >= thirty_days_ago)
-        bans_all_time = len(bans)
+    @commands.command()
+    @commands.has_permissions(ban_members=True)
+    async def ban(self, ctx, user: discord.User, *, reason: str):
+        """Ban a user."""
+        # Your ban logic here
 
-        kicks_7_days = sum(1 for kick in kicks if kick["timestamp"] >= seven_days_ago)
-        kicks_30_days = sum(1 for kick in kicks if kick["timestamp"] >= thirty_days_ago)
-        kicks_all_time = len(kicks)
+        await self.log_action(ctx.guild, "bans")
 
-        warns_7_days = sum(1 for warn in warns if warn["timestamp"] >= seven_days_ago)
-        warns_30_days = sum(1 for warn in warns if warn["timestamp"] >= thirty_days_ago)
-        warns_all_time = len(warns)
+        await ctx.send(f"{user.mention} has been banned.")
 
-        total_7_days = mutes_7_days + bans_7_days + kicks_7_days + warns_7_days
-        total_30_days = mutes_30_days + bans_30_days + kicks_30_days + warns_30_days
-        total_all_time = mutes_all_time + bans_all_time + kicks_all_time + warns_all_time
+    @commands.command()
+    @commands.has_permissions(kick_members=True)
+    async def kick(self, ctx, user: discord.User, *, reason: str):
+        """Kick a user."""
+        # Your kick logic here
 
-        return {
-            "mutes_7_days": mutes_7_days,
-            "mutes_30_days": mutes_30_days,
-            "mutes_all_time": mutes_all_time,
-            "bans_7_days": bans_7_days,
-            "bans_30_days": bans_30_days,
-            "bans_all_time": bans_all_time,
-            "kicks_7_days": kicks_7_days,
-            "kicks_30_days": kicks_30_days,
-            "kicks_all_time": kicks_all_time,
-            "warns_7_days": warns_7_days,
-            "warns_30_days": warns_30_days,
-            "warns_all_time": warns_all_time,
-            "total_7_days": total_7_days,
-            "total_30_days": total_30_days,
-            "total_all_time": total_all_time,
-        }
+        await self.log_action(ctx.guild, "kicks")
+
+        await ctx.send(f"{user.mention} has been kicked.")
 
     @commands.command()
     async def modstats(self, ctx, user: discord.User = None):
@@ -90,6 +60,9 @@ class ModeratorStatsCog(commands.Cog):
             user = ctx.author
 
         guild = ctx.guild
+        seven_days_ago = datetime.utcnow() - timedelta(days=7)
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+
         action_counts = await self.get_action_counts(guild)
 
         embed = discord.Embed(title="Moderation Statistics", color=discord.Color.green())
@@ -111,5 +84,62 @@ class ModeratorStatsCog(commands.Cog):
 
         await ctx.send(embed=embed)
 
-def setup(bot):
-    bot.add_cog(ModeratorStatsCog(bot))
+    async def get_action_counts(self, guild):
+        action_counts = {
+            "mutes_7_days": 0,
+            "mutes_30_days": 0,
+            "mutes_all_time": 0,
+            "bans_7_days": 0,
+            "bans_30_days": 0,
+            "bans_all_time": 0,
+            "kicks_7_days": 0,
+            "kicks_30_days": 0,
+            "kicks_all_time": 0,
+            "warns_7_days": 0,
+            "warns_30_days": 0,
+            "warns_all_time": 0,
+            "total_7_days": 0,
+            "total_30_days": 0,
+            "total_all_time": 0,
+        }
+
+        try:
+            action_data = await self.config.guild(guild).get_raw("action_data")
+            action_counts["mutes_7_days"] = action_data.get("mutes_7_days", 0)
+            action_counts["mutes_30_days"] = action_data.get("mutes_30_days", 0)
+            action_counts["mutes_all_time"] = action_data.get("mutes_all_time", 0)
+            action_counts["bans_7_days"] = action_data.get("bans_7_days", 0)
+            action_counts["bans_30_days"] = action_data.get("bans_30_days", 0)
+            action_counts["bans_all_time"] = action_data.get("bans_all_time", 0)
+            action_counts["kicks_7_days"] = action_data.get("kicks_7_days", 0)
+            action_counts["kicks_30_days"] = action_data.get("kicks_30_days", 0)
+            action_counts["kicks_all_time"] = action_data.get("kicks_all_time", 0)
+            action_counts["warns_7_days"] = action_data.get("warns_7_days", 0)
+            action_counts["warns_30_days"] = action_data.get("warns_30_days", 0)
+            action_counts["warns_all_time"] = action_data.get("warns_all_time", 0)
+            action_counts["total_7_days"] = (
+                action_counts["mutes_7_days"] + action_counts["bans_7_days"]
+                + action_counts["kicks_7_days"] + action_counts["warns_7_days"]
+            )
+            action_counts["total_30_days"] = (
+                action_counts["mutes_30_days"] + action_counts["bans_30_days"]
+                + action_counts["kicks_30_days"] + action_counts["warns_30_days"]
+            )
+            action_counts["total_all_time"] = (
+                action_counts["mutes_all_time"] + action_counts["bans_all_time"]
+                + action_counts["kicks_all_time"] + action_counts["warns_all_time"]
+            )
+        except KeyError:
+            pass
+
+        return action_counts
+
+    async def log_action(self, guild, action_type):
+        timestamp = datetime.utcnow()
+        action_data = await self.config.guild(guild).action_data()
+
+        if action_type not in action_data:
+            action_data[action_type] = []
+
+        action_data[action_type].append(timestamp)
+        await self.config.guild(guild).action_data.set(action_data)
