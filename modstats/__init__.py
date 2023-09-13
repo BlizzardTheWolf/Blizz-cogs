@@ -1,4 +1,4 @@
 from .modstats import ModeratorStatsCog
 
-def setup(bot):
+async def setup(bot):
     bot.add_cog(ModeratorStatsCog(bot))
