@@ -7,8 +7,9 @@ import os
 class ModeratorStatsCog(commands.Cog):
     """Moderation statistics tracking."""
 
-    def __init__(self, bot):
+    def __init__(self, bot, command_prefix):
         self.bot = bot
+        self.command_prefix = command_prefix  # Store the command prefix
         self.config = Config.get_conf(self, identifier=1234567890)  # Change identifier
 
         default_guild_settings = {}
@@ -68,21 +69,21 @@ class ModeratorStatsCog(commands.Cog):
         action_counts = await self.get_action_counts(guild, user.id)
 
         embed = discord.Embed(title="Moderation Statistics", color=discord.Color.green())
-        embed.add_field(name="Mutes (last 7 days)", value=action_counts["mutes_7_days"], inline=True)
-        embed.add_field(name="Mutes (last 30 days)", value=action_counts["mutes_30_days"], inline=True)
-        embed.add_field(name="Mutes (all time)", value=action_counts["mutes_all_time"], inline=True)
-        embed.add_field(name="Bans (last 7 days)", value=action_counts["bans_7_days"], inline=True)
-        embed.add_field(name="Bans (last 30 days)", value=action_counts["bans_30_days"], inline=True)
-        embed.add_field(name="Bans (all time)", value=action_counts["bans_all_time"], inline=True)
-        embed.add_field(name="Kicks (last 7 days)", value=action_counts["kicks_7_days"], inline=True)
-        embed.add_field(name="Kicks (last 30 days)", value=action_counts["kicks_30_days"], inline=True)
-        embed.add_field(name="Kicks (all time)", value=action_counts["kicks_all_time"], inline=True)
-        embed.add_field(name="Warns (last 7 days)", value=action_counts["warns_7_days"], inline=True)
-        embed.add_field(name="Warns (last 30 days)", value=action_counts["warns_30_days"], inline=True)
-        embed.add_field(name="Warns (all time)", value=action_counts["warns_all_time"], inline=True)
-        embed.add_field(name="Total (last 7 days)", value=action_counts["total_7_days"], inline=True)
-        embed.add_field(name="Total (last 30 days)", value=action_counts["total_30_days"], inline=True)
-        embed.add_field(name="Total (all time)", value=action_counts["total_all_time"], inline=True)
+        embed.add_field(name=f"Mutes (last 7 days)", value=action_counts["mutes_7_days"], inline=True)
+        embed.add_field(name=f"Mutes (last 30 days)", value=action_counts["mutes_30_days"], inline=True)
+        embed.add_field(name=f"Mutes (all time)", value=action_counts["mutes_all_time"], inline=True)
+        embed.add_field(name=f"Bans (last 7 days)", value=action_counts["bans_7_days"], inline=True)
+        embed.add_field(name=f"Bans (last 30 days)", value=action_counts["bans_30_days"], inline=True)
+        embed.add_field(name=f"Bans (all time)", value=action_counts["bans_all_time"], inline=True)
+        embed.add_field(name=f"Kicks (last 7 days)", value=action_counts["kicks_7_days"], inline=True)
+        embed.add_field(name=f"Kicks (last 30 days)", value=action_counts["kicks_30_days"], inline=True)
+        embed.add_field(name=f"Kicks (all time)", value=action_counts["kicks_all_time"], inline=True)
+        embed.add_field(name=f"Warns (last 7 days)", value=action_counts["warns_7_days"], inline=True)
+        embed.add_field(name=f"Warns (last 30 days)", value=action_counts["warns_30_days"], inline=True)
+        embed.add_field(name=f"Warns (all time)", value=action_counts["warns_all_time"], inline=True)
+        embed.add_field(name=f"Total (last 7 days)", value=action_counts["total_7_days"], inline=True)
+        embed.add_field(name=f"Total (last 30 days)", value=action_counts["total_30_days"], inline=True)
+        embed.add_field(name=f"Total (all time)", value=action_counts["total_all_time"], inline=True)
 
         await ctx.send(embed=embed)
 
@@ -169,3 +170,6 @@ class ModeratorStatsCog(commands.Cog):
 
     def count_actions_in_duration(self, actions, duration):
         return sum(1 for action in actions if action >= duration)
+
+def setup(bot):
+    bot.add_cog(ModeratorStatsCog(bot, bot.command_prefix))  # Pass the command prefix
