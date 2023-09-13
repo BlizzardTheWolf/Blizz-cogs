@@ -107,40 +107,39 @@ class ModeratorStatsCog(commands.Cog):
 
         try:
             data_dir = os.path.join("/home/panda/.local/share/Red-DiscordBot/data/lake/moderatorstats", str(guild.id))
-            os.makedirs(data_dir, exist_ok=True)
             data_file = os.path.join(data_dir, f"{user_id}.json")
 
             with open(data_file, "r") as file:
                 data = json.load(file)
-                action_counts["mutes_7_days"] = data.get("mutes_7_days", 0)
-                action_counts["mutes_30_days"] = data.get("mutes_30_days", 0)
-                action_counts["mutes_all_time"] = data.get("mutes_all_time", 0)
-                action_counts["bans_7_days"] = data.get("bans_7_days", 0)
-                action_counts["bans_30_days"] = data.get("bans_30_days", 0)
-                action_counts["bans_all_time"] = data.get("bans_all_time", 0)
-                action_counts["kicks_7_days"] = data.get("kicks_7_days", 0)
-                action_counts["kicks_30_days"] = data.get("kicks_30_days", 0)
-                action_counts["kicks_all_time"] = data.get("kicks_all_time", 0)
-                action_counts["warns_7_days"] = data.get("warns_7_days", 0)
-                action_counts["warns_30_days"] = data.get("warns_30_days", 0)
-                action_counts["warns_all_time"] = data.get("warns_all_time", 0)
+                action_counts["mutes_7_days"] = self.count_actions_in_duration(data["mutes"], seven_days_ago)
+                action_counts["mutes_30_days"] = self.count_actions_in_duration(data["mutes"], thirty_days_ago)
+                action_counts["mutes_all_time"] = len(data["mutes"])
+                action_counts["bans_7_days"] = self.count_actions_in_duration(data["bans"], seven_days_ago)
+                action_counts["bans_30_days"] = self.count_actions_in_duration(data["bans"], thirty_days_ago)
+                action_counts["bans_all_time"] = len(data["bans"])
+                action_counts["kicks_7_days"] = self.count_actions_in_duration(data["kicks"], seven_days_ago)
+                action_counts["kicks_30_days"] = self.count_actions_in_duration(data["kicks"], thirty_days_ago)
+                action_counts["kicks_all_time"] = len(data["kicks"])
+                action_counts["warns_7_days"] = self.count_actions_in_duration(data["warns"], seven_days_ago)
+                action_counts["warns_30_days"] = self.count_actions_in_duration(data["warns"], thirty_days_ago)
+                action_counts["warns_all_time"] = len(data["warns"])
                 action_counts["total_7_days"] = (
-                    data.get("mutes_7_days", 0)
-                    + data.get("bans_7_days", 0)
-                    + data.get("kicks_7_days", 0)
-                    + data.get("warns_7_days", 0)
+                    action_counts["mutes_7_days"]
+                    + action_counts["bans_7_days"]
+                    + action_counts["kicks_7_days"]
+                    + action_counts["warns_7_days"]
                 )
                 action_counts["total_30_days"] = (
-                    data.get("mutes_30_days", 0)
-                    + data.get("bans_30_days", 0)
-                    + data.get("kicks_30_days", 0)
-                    + data.get("warns_30_days", 0)
+                    action_counts["mutes_30_days"]
+                    + action_counts["bans_30_days"]
+                    + action_counts["kicks_30_days"]
+                    + action_counts["warns_30_days"]
                 )
                 action_counts["total_all_time"] = (
-                    data.get("mutes_all_time", 0)
-                    + data.get("bans_all_time", 0)
-                    + data.get("kicks_all_time", 0)
-                    + data.get("warns_all_time", 0)
+                    action_counts["mutes_all_time"]
+                    + action_counts["bans_all_time"]
+                    + action_counts["kicks_all_time"]
+                    + action_counts["warns_all_time"]
                 )
         except FileNotFoundError:
             pass
@@ -167,3 +166,9 @@ class ModeratorStatsCog(commands.Cog):
 
         with open(data_file, "w") as file:
             json.dump(data, file)
+
+    def count_actions_in_duration(self, actions, duration):
+        return sum(1 for action in actions if action >= duration)
+
+def setup(bot):
+    bot.add_cog(ModeratorStatsCog(bot))
