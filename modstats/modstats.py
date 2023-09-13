@@ -169,6 +169,3 @@ class ModeratorStatsCog(commands.Cog):
 
     def count_actions_in_duration(self, actions, duration):
         return sum(1 for action in actions if action >= duration)
-
-def setup(bot):
-    bot.add_cog(ModeratorStatsCog(bot))
