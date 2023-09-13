@@ -4,30 +4,40 @@ from datetime import datetime, timedelta
 import os
 import json
 
+class DataHandler:
+    def __init__(self, data_dir):
+        self.data_dir = data_dir
+
+    def load_data(self, guild):
+        data_file = os.path.join(self.data_dir, f"{guild.id}.json")
+        try:
+            with open(data_file, "r") as file:
+                return json.load(file)
+        except FileNotFoundError:
+            return {}
+
+    def save_data(self, guild, data):
+        data_file = os.path.join(self.data_dir, f"{guild.id}.json")
+        with open(data_file, "w") as file:
+            json.dump(data, file, indent=4)
+
 class ModeratorStatsCog(commands.Cog):
     """Moderation statistics tracking."""
 
     def __init__(self, bot):
         self.bot = bot
-        self.data_dir = "/home/panda/.local/share/Red-DiscordBot/data/lake/modstats"
+        self.data_handler = DataHandler("<YOUR DATA DIR>")
 
     async def log_action(self, guild, action_type):
         timestamp = datetime.utcnow()
-        data_file = os.path.join(self.data_dir, f"{guild.id}.json")
-
-        try:
-            with open(data_file, "r") as file:
-                data = json.load(file)
-        except FileNotFoundError:
-            data = {}
+        data = self.data_handler.load_data(guild)
 
         if action_type not in data:
             data[action_type] = []
 
         data[action_type].append({"timestamp": timestamp})
 
-        with open(data_file, "w") as file:
-            json.dump(data, file, indent=4)
+        self.data_handler.save_data(guild, data)
 
     @commands.Cog.listener()
     async def on_member_ban(self, guild, user):
@@ -46,6 +56,7 @@ class ModeratorStatsCog(commands.Cog):
         await self.log_action(member.guild, "warns")
 
     async def get_action_counts(self, guild):
+        data = self.data_handler.load_data(guild)
         action_counts = {
             "mutes_7_days": 0,
             "mutes_30_days": 0,
@@ -64,41 +75,32 @@ class ModeratorStatsCog(commands.Cog):
             "total_all_time": 0,
         }
 
-        try:
-            with open(os.path.join(self.data_dir, f"{guild.id}.json"), "r") as file:
-                data = json.load(file)
-                action_counts["mutes_7_days"] = data.get("mutes_7_days", 0)
-                action_counts["mutes_30_days"] = data.get("mutes_30_days", 0)
-                action_counts["mutes_all_time"] = data.get("mutes_all_time", 0)
-                action_counts["bans_7_days"] = data.get("bans_7_days", 0)
-                action_counts["bans_30_days"] = data.get("bans_30_days", 0)
-                action_counts["bans_all_time"] = data.get("bans_all_time", 0)
-                action_counts["kicks_7_days"] = data.get("kicks_7_days", 0)
-                action_counts["kicks_30_days"] = data.get("kicks_30_days", 0)
-                action_counts["kicks_all_time"] = data.get("kicks_all_time", 0)
-                action_counts["warns_7_days"] = data.get("warns_7_days", 0)
-                action_counts["warns_30_days"] = data.get("warns_30_days", 0)
-                action_counts["warns_all_time"] = data.get("warns_all_time", 0)
-                action_counts["total_7_days"] = (
-                    data.get("mutes_7_days", 0)
-                    + data.get("bans_7_days", 0)
-                    + data.get("kicks_7_days", 0)
-                    + data.get("warns_7_days", 0)
-                )
-                action_counts["total_30_days"] = (
-                    data.get("mutes_30_days", 0)
-                    + data.get("bans_30_days", 0)
-                    + data.get("kicks_30_days", 0)
-                    + data.get("warns_30_days", 0)
-                )
-                action_counts["total_all_time"] = (
-                    data.get("mutes_all_time", 0)
-                    + data.get("bans_all_time", 0)
-                    + data.get("kicks_all_time", 0)
-                    + data.get("warns_all_time", 0)
-                )
-        except FileNotFoundError:
-            pass
+        for action_type, actions in data.items():
+            for action in actions:
+                if action["timestamp"] >= datetime.utcnow() - timedelta(days=7):
+                    action_counts[f"{action_type}_7_days"] += 1
+                if action["timestamp"] >= datetime.utcnow() - timedelta(days=30):
+                    action_counts[f"{action_type}_30_days"] += 1
+                action_counts[f"{action_type}_all_time"] += 1
+
+        action_counts["total_7_days"] = (
+            action_counts["mutes_7_days"]
+            + action_counts["bans_7_days"]
+            + action_counts["kicks_7_days"]
+            + action_counts["warns_7_days"]
+        )
+        action_counts["total_30_days"] = (
+            action_counts["mutes_30_days"]
+            + action_counts["bans_30_days"]
+            + action_counts["kicks_30_days"]
+            + action_counts["warns_30_days"]
+        )
+        action_counts["total_all_time"] = (
+            action_counts["mutes_all_time"]
+            + action_counts["bans_all_time"]
+            + action_counts["kicks_all_time"]
+            + action_counts["warns_all_time"]
+        )
 
         return action_counts
 
@@ -109,9 +111,6 @@ class ModeratorStatsCog(commands.Cog):
             user = ctx.author
 
         guild = ctx.guild
-        seven_days_ago = datetime.utcnow() - timedelta(days=7)
-        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-
         action_counts = await self.get_action_counts(guild)
 
         embed = discord.Embed(title="Moderation Statistics", color=discord.Color.green())
