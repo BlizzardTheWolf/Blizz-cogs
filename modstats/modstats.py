@@ -26,7 +26,7 @@ class ModeratorStatsCog(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.data_handler = DataHandler("<YOUR DATA DIR>")
+        self.data_handler = DataHandler("/home/panda/.local/share/Red-DiscordBot/data/lake/modstats")
 
     async def log_action(self, guild, action_type):
         timestamp = datetime.utcnow()
