@@ -1,11 +1,16 @@
 import discord
 from redbot.core import commands
+import typing
 
 class MessageCog(commands.Cog):
     """Moderator DM commands."""
 
     def __init__(self, bot):
         self.bot = bot
+
+    @property
+    def games(self):
+        return self.views
 
     @commands.command()
     @commands.has_permissions(manage_messages=True)
