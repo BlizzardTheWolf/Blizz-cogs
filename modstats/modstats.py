@@ -1,43 +1,24 @@
 import discord
-from redbot.core import commands
+from redbot.core import commands, Config
 from datetime import datetime, timedelta
-import os
-import json
-
-class DataHandler:
-    def __init__(self, data_dir):
-        self.data_dir = data_dir
-
-    def load_data(self, guild):
-        data_file = os.path.join(self.data_dir, f"{guild.id}.json")
-        try:
-            with open(data_file, "r") as file:
-                return json.load(file)
-        except FileNotFoundError:
-            return {}
-
-    def save_data(self, guild, data):
-        data_file = os.path.join(self.data_dir, f"{guild.id}.json")
-        with open(data_file, "w") as file:
-            json.dump(data, file, indent=4)
 
 class ModeratorStatsCog(commands.Cog):
     """Moderation statistics tracking."""
 
     def __init__(self, bot):
         self.bot = bot
-        self.data_handler = DataHandler("/home/panda/.local/share/Red-DiscordBot/data/lake/modstats")
+        self.config = Config.get_conf(self, identifier=1234567890)  # Change identifier
+        self.config.register_guild(
+            mutes=[],
+            bans=[],
+            kicks=[],
+            warns=[]
+        )
 
     async def log_action(self, guild, action_type):
         timestamp = datetime.utcnow()
-        data = self.data_handler.load_data(guild)
-
-        if action_type not in data:
-            data[action_type] = []
-
-        data[action_type].append({"timestamp": timestamp})
-
-        self.data_handler.save_data(guild, data)
+        async with self.config.guild(guild).get_attr(action_type) as actions:
+            actions.append({"timestamp": timestamp})
 
     @commands.Cog.listener()
     async def on_member_ban(self, guild, user):
@@ -56,53 +37,51 @@ class ModeratorStatsCog(commands.Cog):
         await self.log_action(member.guild, "warns")
 
     async def get_action_counts(self, guild):
-        data = self.data_handler.load_data(guild)
-        action_counts = {
-            "mutes_7_days": 0,
-            "mutes_30_days": 0,
-            "mutes_all_time": 0,
-            "bans_7_days": 0,
-            "bans_30_days": 0,
-            "bans_all_time": 0,
-            "kicks_7_days": 0,
-            "kicks_30_days": 0,
-            "kicks_all_time": 0,
-            "warns_7_days": 0,
-            "warns_30_days": 0,
-            "warns_all_time": 0,
-            "total_7_days": 0,
-            "total_30_days": 0,
-            "total_all_time": 0,
+        seven_days_ago = datetime.utcnow() - timedelta(days=7)
+        thirty_days_ago = datetime.utcnow() - timedelta(days=30)
+
+        mutes = await self.config.guild(guild).mutes()
+        bans = await self.config.guild(guild).bans()
+        kicks = await self.config.guild(guild).kicks()
+        warns = await self.config.guild(guild).warns()
+
+        mutes_7_days = sum(1 for mute in mutes if mute["timestamp"] >= seven_days_ago)
+        mutes_30_days = sum(1 for mute in mutes if mute["timestamp"] >= thirty_days_ago)
+        mutes_all_time = len(mutes)
+
+        bans_7_days = sum(1 for ban in bans if ban["timestamp"] >= seven_days_ago)
+        bans_30_days = sum(1 for ban in bans if ban["timestamp"] >= thirty_days_ago)
+        bans_all_time = len(bans)
+
+        kicks_7_days = sum(1 for kick in kicks if kick["timestamp"] >= seven_days_ago)
+        kicks_30_days = sum(1 for kick in kicks if kick["timestamp"] >= thirty_days_ago)
+        kicks_all_time = len(kicks)
+
+        warns_7_days = sum(1 for warn in warns if warn["timestamp"] >= seven_days_ago)
+        warns_30_days = sum(1 for warn in warns if warn["timestamp"] >= thirty_days_ago)
+        warns_all_time = len(warns)
+
+        total_7_days = mutes_7_days + bans_7_days + kicks_7_days + warns_7_days
+        total_30_days = mutes_30_days + bans_30_days + kicks_30_days + warns_30_days
+        total_all_time = mutes_all_time + bans_all_time + kicks_all_time + warns_all_time
+
+        return {
+            "mutes_7_days": mutes_7_days,
+            "mutes_30_days": mutes_30_days,
+            "mutes_all_time": mutes_all_time,
+            "bans_7_days": bans_7_days,
+            "bans_30_days": bans_30_days,
+            "bans_all_time": bans_all_time,
+            "kicks_7_days": kicks_7_days,
+            "kicks_30_days": kicks_30_days,
+            "kicks_all_time": kicks_all_time,
+            "warns_7_days": warns_7_days,
+            "warns_30_days": warns_30_days,
+            "warns_all_time": warns_all_time,
+            "total_7_days": total_7_days,
+            "total_30_days": total_30_days,
+            "total_all_time": total_all_time,
         }
-
-        for action_type, actions in data.items():
-            for action in actions:
-                if action["timestamp"] >= datetime.utcnow() - timedelta(days=7):
-                    action_counts[f"{action_type}_7_days"] += 1
-                if action["timestamp"] >= datetime.utcnow() - timedelta(days=30):
-                    action_counts[f"{action_type}_30_days"] += 1
-                action_counts[f"{action_type}_all_time"] += 1
-
-        action_counts["total_7_days"] = (
-            action_counts["mutes_7_days"]
-            + action_counts["bans_7_days"]
-            + action_counts["kicks_7_days"]
-            + action_counts["warns_7_days"]
-        )
-        action_counts["total_30_days"] = (
-            action_counts["mutes_30_days"]
-            + action_counts["bans_30_days"]
-            + action_counts["kicks_30_days"]
-            + action_counts["warns_30_days"]
-        )
-        action_counts["total_all_time"] = (
-            action_counts["mutes_all_time"]
-            + action_counts["bans_all_time"]
-            + action_counts["kicks_all_time"]
-            + action_counts["warns_all_time"]
-        )
-
-        return action_counts
 
     @commands.command()
     async def modstats(self, ctx, user: discord.User = None):
