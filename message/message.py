@@ -1,6 +1,5 @@
 import discord
 from redbot.core import commands
-import typing
 
 class MessageCog(commands.Cog):
     """Moderator DM commands."""
