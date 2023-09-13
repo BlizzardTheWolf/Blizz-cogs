@@ -16,7 +16,7 @@ class ModeratorStatsCog(commands.Cog):
         self.config.register_guild(**default_guild_settings)
 
     @commands.command()
-    @commands.has_role("Moderator")  # Change to the name of your moderator role
+    @commands.guild_only()
     async def modstats(self, ctx, user: discord.User = None):
         """Display moderation statistics for a user."""
         if user is None:
@@ -53,3 +53,10 @@ class ModeratorStatsCog(commands.Cog):
 
         async with self.config.guild(guild).mod_actions() as mod_actions:
             mod_actions.append(action)
+
+    async def cog_check(self, ctx):
+        """Check if the user has mod or admin permissions."""
+        return (
+            ctx.author.guild_permissions.manage_messages
+            or ctx.author.guild_permissions.ban_members
+        )
