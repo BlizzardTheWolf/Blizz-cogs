@@ -29,15 +29,19 @@ class ModeratorStatsCog(commands.Cog):
         with open(data_file, "w") as file:
             json.dump(data, file, indent=4)
 
+    @commands.Cog.listener()
     async def on_member_ban(self, guild, user):
         await self.log_action(guild, "bans")
 
+    @commands.Cog.listener()
     async def on_member_unban(self, guild, user):
         await self.log_action(guild, "unbans")
 
+    @commands.Cog.listener()
     async def on_member_remove(self, member):
         await self.log_action(member.guild, "kicks")
 
+    @commands.Cog.listener()
     async def on_member_warn(self, member):
         await self.log_action(member.guild, "warns")
 
