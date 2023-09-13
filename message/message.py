@@ -1,5 +1,5 @@
-from redbot.core import commands
 import discord
+from redbot.core import commands
 
 class MessageCog(commands.Cog):
     """Moderator DM commands."""
@@ -9,31 +9,24 @@ class MessageCog(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(manage_messages=True)
-    async def message(self, ctx, embed: bool = True, *, message_content):
+    async def message(self, ctx, user: discord.User, embed: bool = True, *, message_content):
         """
         Send a message to a user via DM through the bot.
-        Usage: [p]message [embed=True] <message>
+        Usage: [p]message <user (@user or user id)> [embed=True] <message>
         """
         try:
             # Remove the invoking user's name from the message content
             message_content = message_content.replace(ctx.author.mention, '').strip()
 
-            # Find the mentioned user (you can also use user IDs)
-            if ctx.message.mentions:
-                target_user = ctx.message.mentions[0]
-            else:
-                await ctx.send("You need to mention a user to send a message to.")
-                return
-
             if embed:
                 # If embed=True, send the message as an embed
                 embed = discord.Embed(description=message_content, color=discord.Color.green())
-                await target_user.send(embed=embed)
+                await user.send(embed=embed)
             else:
                 # If embed=False, send the message as plain text
-                await target_user.send(message_content)
+                await user.send(message_content)
 
-            await ctx.send(f"Message sent to {target_user.mention} successfully!")
+            await ctx.send(f"Message sent to {user.mention} successfully!")
         except Exception as e:
             await ctx.send(f"An error occurred: {e}")
 
