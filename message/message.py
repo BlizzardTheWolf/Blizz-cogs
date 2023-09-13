@@ -9,12 +9,15 @@ class MessageCog(commands.Cog):
 
     @commands.command()
     @commands.has_permissions(manage_messages=True)
-    async def message(self, ctx, user: discord.User, embed: bool = True, *, message_content):
+    async def message(self, ctx, user: discord.User, embed_option: str = "True", *, message_content):
         """
         Send a message to a user via DM through the bot.
         Usage: [p]message <user (@user or user id)> [embed=True] <message>
         """
         try:
+            # Convert the embed_option string to a boolean value
+            embed = embed_option.lower() == "true"
+
             # Remove the invoking user's name from the message content
             message_content = message_content.replace(ctx.author.mention, '').strip()
 
