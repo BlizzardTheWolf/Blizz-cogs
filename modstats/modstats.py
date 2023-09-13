@@ -1,6 +1,8 @@
 import discord
 from redbot.core import commands, Config
 from datetime import datetime, timedelta
+import json
+import os
 
 class ModeratorStatsCog(commands.Cog):
     """Moderation statistics tracking."""
@@ -19,7 +21,7 @@ class ModeratorStatsCog(commands.Cog):
         """Mute a user."""
         # Your mute logic here
 
-        await self.log_action(ctx.guild, "mutes")
+        await self.log_action(ctx.guild, user.id, "mutes")
 
         await ctx.send(f"{user.mention} has been muted.")
 
@@ -29,7 +31,7 @@ class ModeratorStatsCog(commands.Cog):
         """Warn a user."""
         # Your warn logic here
 
-        await self.log_action(ctx.guild, "warns")
+        await self.log_action(ctx.guild, user.id, "warns")
 
         await ctx.send(f"{user.mention} has been warned.")
 
@@ -39,7 +41,7 @@ class ModeratorStatsCog(commands.Cog):
         """Ban a user."""
         # Your ban logic here
 
-        await self.log_action(ctx.guild, "bans")
+        await self.log_action(ctx.guild, user.id, "bans")
 
         await ctx.send(f"{user.mention} has been banned.")
 
@@ -49,7 +51,7 @@ class ModeratorStatsCog(commands.Cog):
         """Kick a user."""
         # Your kick logic here
 
-        await self.log_action(ctx.guild, "kicks")
+        await self.log_action(ctx.guild, user.id, "kicks")
 
         await ctx.send(f"{user.mention} has been kicked.")
 
@@ -63,7 +65,7 @@ class ModeratorStatsCog(commands.Cog):
         seven_days_ago = datetime.utcnow() - timedelta(days=7)
         thirty_days_ago = datetime.utcnow() - timedelta(days=30)
 
-        action_counts = await self.get_action_counts(guild)
+        action_counts = await self.get_action_counts(guild, user.id)
 
         embed = discord.Embed(title="Moderation Statistics", color=discord.Color.green())
         embed.add_field(name="Mutes (last 7 days)", value=action_counts["mutes_7_days"], inline=True)
@@ -84,7 +86,7 @@ class ModeratorStatsCog(commands.Cog):
 
         await ctx.send(embed=embed)
 
-    async def get_action_counts(self, guild):
+    async def get_action_counts(self, guild, user_id):
         action_counts = {
             "mutes_7_days": 0,
             "mutes_30_days": 0,
@@ -104,42 +106,64 @@ class ModeratorStatsCog(commands.Cog):
         }
 
         try:
-            action_data = await self.config.guild(guild).get_raw("action_data")
-            action_counts["mutes_7_days"] = action_data.get("mutes_7_days", 0)
-            action_counts["mutes_30_days"] = action_data.get("mutes_30_days", 0)
-            action_counts["mutes_all_time"] = action_data.get("mutes_all_time", 0)
-            action_counts["bans_7_days"] = action_data.get("bans_7_days", 0)
-            action_counts["bans_30_days"] = action_data.get("bans_30_days", 0)
-            action_counts["bans_all_time"] = action_data.get("bans_all_time", 0)
-            action_counts["kicks_7_days"] = action_data.get("kicks_7_days", 0)
-            action_counts["kicks_30_days"] = action_data.get("kicks_30_days", 0)
-            action_counts["kicks_all_time"] = action_data.get("kicks_all_time", 0)
-            action_counts["warns_7_days"] = action_data.get("warns_7_days", 0)
-            action_counts["warns_30_days"] = action_data.get("warns_30_days", 0)
-            action_counts["warns_all_time"] = action_data.get("warns_all_time", 0)
-            action_counts["total_7_days"] = (
-                action_counts["mutes_7_days"] + action_counts["bans_7_days"]
-                + action_counts["kicks_7_days"] + action_counts["warns_7_days"]
-            )
-            action_counts["total_30_days"] = (
-                action_counts["mutes_30_days"] + action_counts["bans_30_days"]
-                + action_counts["kicks_30_days"] + action_counts["warns_30_days"]
-            )
-            action_counts["total_all_time"] = (
-                action_counts["mutes_all_time"] + action_counts["bans_all_time"]
-                + action_counts["kicks_all_time"] + action_counts["warns_all_time"]
-            )
-        except KeyError:
+            data_dir = os.path.join("/home/panda/.local/share/Red-DiscordBot/data/lake/moderatorstats", str(guild.id))
+            os.makedirs(data_dir, exist_ok=True)
+            data_file = os.path.join(data_dir, f"{user_id}.json")
+
+            with open(data_file, "r") as file:
+                data = json.load(file)
+                action_counts["mutes_7_days"] = data.get("mutes_7_days", 0)
+                action_counts["mutes_30_days"] = data.get("mutes_30_days", 0)
+                action_counts["mutes_all_time"] = data.get("mutes_all_time", 0)
+                action_counts["bans_7_days"] = data.get("bans_7_days", 0)
+                action_counts["bans_30_days"] = data.get("bans_30_days", 0)
+                action_counts["bans_all_time"] = data.get("bans_all_time", 0)
+                action_counts["kicks_7_days"] = data.get("kicks_7_days", 0)
+                action_counts["kicks_30_days"] = data.get("kicks_30_days", 0)
+                action_counts["kicks_all_time"] = data.get("kicks_all_time", 0)
+                action_counts["warns_7_days"] = data.get("warns_7_days", 0)
+                action_counts["warns_30_days"] = data.get("warns_30_days", 0)
+                action_counts["warns_all_time"] = data.get("warns_all_time", 0)
+                action_counts["total_7_days"] = (
+                    data.get("mutes_7_days", 0)
+                    + data.get("bans_7_days", 0)
+                    + data.get("kicks_7_days", 0)
+                    + data.get("warns_7_days", 0)
+                )
+                action_counts["total_30_days"] = (
+                    data.get("mutes_30_days", 0)
+                    + data.get("bans_30_days", 0)
+                    + data.get("kicks_30_days", 0)
+                    + data.get("warns_30_days", 0)
+                )
+                action_counts["total_all_time"] = (
+                    data.get("mutes_all_time", 0)
+                    + data.get("bans_all_time", 0)
+                    + data.get("kicks_all_time", 0)
+                    + data.get("warns_all_time", 0)
+                )
+        except FileNotFoundError:
             pass
 
         return action_counts
 
-    async def log_action(self, guild, action_type):
+    async def log_action(self, guild, user_id, action_type):
         timestamp = datetime.utcnow()
-        action_data = await self.config.guild(guild).action_data()
 
-        if action_type not in action_data:
-            action_data[action_type] = []
+        data_dir = os.path.join("/home/panda/.local/share/Red-DiscordBot/data/lake/moderatorstats", str(guild.id))
+        os.makedirs(data_dir, exist_ok=True)
+        data_file = os.path.join(data_dir, f"{user_id}.json")
 
-        action_data[action_type].append(timestamp)
-        await self.config.guild(guild).action_data.set(action_data)
+        try:
+            with open(data_file, "r") as file:
+                data = json.load(file)
+        except FileNotFoundError:
+            data = {}
+
+        if action_type not in data:
+            data[action_type] = []
+
+        data[action_type].append(timestamp)
+
+        with open(data_file, "w") as file:
+            json.dump(data, file)
