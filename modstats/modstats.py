@@ -19,9 +19,12 @@ class ModeratorStatsCog(commands.Cog):
         self.config.register_guild(**default_guild_settings)
 
     @commands.command()
-    @commands.has_permissions(manage_messages=True)
-    async def stats(self, ctx):
-        """Display moderation statistics."""
+    @commands.has_role("Moderator")  # Change to the name of your moderator role
+    async def modstats(self, ctx, user: discord.User = None):
+        """Display moderation statistics for a user."""
+        if user is None:
+            user = ctx.author
+
         guild = ctx.guild
         seven_days_ago = datetime.utcnow() - timedelta(days=7)
         thirty_days_ago = datetime.utcnow() - timedelta(days=30)
