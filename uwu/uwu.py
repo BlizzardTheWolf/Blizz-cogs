@@ -7,9 +7,17 @@ class UwuCog(commands.Cog):
 
     @commands.command()
     async def uwu(self, ctx, *, message: str):
-        """UwU-nize any message! OwO"""
-        message = message.replace('l', 'w').replace('r', 'w').replace('L', 'W').replace('R', 'W')
-        await ctx.send(message)
+        """Replace 'l' and 'r' with 'w' in a message, excluding text within double colons (::)."""
+        parts = message.split("::")
+        uwu_message = ""
+
+        for i, part in enumerate(parts):
+            if i % 2 == 0:
+                uwu_message += part.replace('l', 'w').replace('r', 'w').replace('L', 'W').replace('R', 'W')
+            else:
+                uwu_message += f"::{part}::"
+        
+        await ctx.send(uwu_message)
 
 def setup(bot):
     bot.add_cog(UwuCog(bot))
