@@ -7,7 +7,7 @@ class UwuCog(commands.Cog):
 
     @commands.command()
     async def uwu(self, ctx, *, message: str):
-        """Replace 'l' and 'r' with 'w' in a message."""
+        """UwU-nize any message! OwO"""
         message = message.replace('l', 'w').replace('r', 'w').replace('L', 'W').replace('R', 'W')
         await ctx.send(message)
 
