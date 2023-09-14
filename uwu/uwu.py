@@ -7,7 +7,7 @@ class UwuCog(commands.Cog):
 
     @commands.command()
     async def uwu(self, ctx, *, message: str):
-        """Replace 'l' and 'r' with 'w' in a message, excluding text within double colons (::)."""
+        """OwO What's this?"""
         parts = message.split("::")
         uwu_message = ""
 
