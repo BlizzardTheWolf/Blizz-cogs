@@ -1,4 +1,4 @@
 from .uwu import UwuCog
 
-def setup(bot):
+async def setup(bot):
     await bot.add_cog(UwuCog(bot))
