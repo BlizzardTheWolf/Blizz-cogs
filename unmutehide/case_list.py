@@ -88,6 +88,3 @@ class CaseList(commands.Cog):
                     break
 
         await message.clear_reactions()
-
-def setup(bot):
-    bot.add_cog(CaseList(bot))
