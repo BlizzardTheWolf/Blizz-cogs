@@ -1,4 +1,4 @@
-from .unmute_hide import UnmuteHideCog
+from .case_list import CaseList
 
 async def setup(bot):
-    await bot.add_cog(UnmuteHideCog(bot))
+    await bot.add_cog(CaseList(bot))
