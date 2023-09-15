@@ -1,20 +1,19 @@
 import discord
-from discord.ext import commands
+from redbot.core import commands
 
 class AppealDM(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name="appeal")
-    async def send_appeal(self, ctx, user: discord.User):
-        appeal_form_link = "https://forms.gle/hm6EwyKdCFsn8opQA"
-        
-        embed = discord.Embed(
-            title="Ban Appeal Form for Joe Caine & Co",
-            description=f"Click [here]({appeal_form_link}) to access the ban appeal form.",
-            color=discord.Color.blue()
-        )
-        
-        await user.send(embed=embed)
-        await ctx.send(f"Ban appeal form sent to {user.display_name}.")
+    @commands.command()
+    async def appeal(self, ctx, user: discord.User):
+        """Send ban appeal form."""
+        appeal_form = "Ban appeal form for Joe Caine & Co\n\nhttps://forms.gle/hm6EwyKdCFsn8opQA"
+        try:
+            await user.send(appeal_form)
+            await ctx.send(f"Ban appeal form has been sent to {user.name}.")
+        except discord.Forbidden:
+            await ctx.send("I couldn't send the appeal form. Make sure the user's DMs are open.")
 
+def setup(bot):
+    bot.add_cog(AppealDM(bot))
