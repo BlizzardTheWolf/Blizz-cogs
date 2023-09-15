@@ -12,7 +12,7 @@ class AppealDM(commands.Cog):
         embed = discord.Embed(
             title="Ban Appeal Form for Joe Caine & Co",
             description=f"Click [here]({appeal_form_link}) to access the ban appeal form.",
-            color=discord.Color.blue()
+            color=discord.Color.purple()
         )
         
         await user.send(embed=embed)
