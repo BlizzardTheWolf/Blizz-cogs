@@ -1,4 +1,5 @@
 from .appealdm import AppealDM
 
-async def setup(bot):
-    await bot.add_cog(AppealDM(bot))
+def setup(bot):
+    cog = AppealDM(bot)
+    bot.add_cog(cog)
