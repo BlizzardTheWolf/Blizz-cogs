@@ -1,4 +1,4 @@
-from .modstats import ModeratorStatsCog
+from .appealdm import AppealDM
 
-async def setup(bot):
-    bot.add_cog(ModeratorStatsCog(bot, bot.command_prefix))  # Pass the command prefix
+def setup(bot):
+    bot.add_cog(AppealDM(bot))
