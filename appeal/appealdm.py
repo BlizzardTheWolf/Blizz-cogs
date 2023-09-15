@@ -17,3 +17,6 @@ class AppealDM(commands.Cog):
         
         await user.send(embed=embed)
         await ctx.send(f"Ban appeal form sent to {user.display_name}.")
+
+def setup(bot):
+    bot.add_cog(AppealDM(bot))
