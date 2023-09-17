@@ -11,10 +11,10 @@ class AppealDM(commands.Cog):
         """Send ban appeal form to the specified user's DMs."""
         try:
             embed = discord.Embed(
-                title='Ban appeal form for Joe Caine & Co',
-                description='Click the link below for the form.\n\nhttps://forms.gle/hm6EwyKdCFsn8opQA',
-                colour=15158332,
-                url='https://forms.gle/hm6EwyKdCFsn8opQA',
+                title='Ban appeal for Joe Caine & Co:',
+                description='How to appeal:\n\nJoin the appeal server with the link below, and fill in the appeal there. Any extra info is provided there.\n\nhttps://discord.gg/PHAAqEdYsu',
+                colour=2123412,
+                url='https://discord.gg/PHAAqEdYsu',
             )
 
             embed.set_author(
