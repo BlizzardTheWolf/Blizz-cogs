@@ -1,4 +1,4 @@
 from .joke import JokeCog
 
-def setup(bot):
-    bot.add_cog(JokeCog(bot))
+async def setup(bot):
+    await bot.add_cog(JokeCog(bot))
