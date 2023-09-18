@@ -1,4 +1,4 @@
-from .joke import JokeCog
+from .randomresponse import RandomResponse
 
 async def setup(bot):
-    await bot.add_cog(JokeCog(bot))
+    await bot.add_cog(RandomResponse(bot))
