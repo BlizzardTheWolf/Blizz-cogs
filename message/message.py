@@ -22,7 +22,7 @@ class MessageCog(commands.Cog):
             if user:
                 if embed:
                     # If embed=True, send the message as an embed
-                    embed = discord.Embed(description=message_content, color=discord.Color.DarkPurple())
+                    embed = discord.Embed(description=message_content, color=discord.Color.purple())
                     await user.send(embed=embed)
                 else:
                     # If embed=False, send the message as plain text
