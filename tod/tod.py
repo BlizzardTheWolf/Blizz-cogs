@@ -49,7 +49,7 @@ class TruthOrDare(commands.Cog):
             self.current_question = self.get_next_question(category)
             self.current_question_msg = await ctx.send(f"**{ctx.author.display_name}**, {self.current_question}")
             await self.current_question_msg.add_reaction('➡️')
-            self.timer.start(ctx.author)
+            self.timer.start(self.current_question_msg.author)
         else:
             await ctx.send("Someone is already playing Truth or Dare. Wait for the current question to finish.")
 
@@ -74,3 +74,6 @@ class TruthOrDare(commands.Cog):
     @timer.before_loop
     async def before_timer(self):
         await self.bot.wait_until_ready()
+
+def setup(bot):
+    bot.add_cog(TruthOrDare(bot))
