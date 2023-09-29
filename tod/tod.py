@@ -2253,16 +2253,20 @@ class TruthOrDare(commands.Cog):
                 and reaction.message.id == message.id
             )
 
-        try:
-            reaction, _ = await self.bot.wait_for(
-                "reaction_add", check=check, timeout=120.0
-            )  # Wait for a reaction for up to 2 minutes
-        except asyncio.TimeoutError:
-            pass  # No reaction, do nothing
-        else:
-            # Remove old message and send a new one
-            await message.delete()
-            await self.tod(ctx, category)  # Send a new question
+            try:
+        reaction, _ = await self.bot.wait_for(
+            "reaction_add", check=check, timeout=120.0
+        )  # Wait for a reaction for up to 2 minutes
+    except asyncio.TimeoutError:
+        pass  # No reaction, do nothing
+    else:
+        # Remove old message and send a new one
+        await message.delete()
+        await self.tod(ctx, category)  # Send a new question
+
+        # Remove the reaction after 2 minutes
+        await asyncio.sleep(120)
+        await message.clear_reaction("🔄")
 
 def setup(bot):
     bot.add_cog(TruthOrDare(bot))
