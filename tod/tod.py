@@ -1,69 +1,60 @@
 import discord
-from redbot.core import commands, Config
+from redbot.core import commands
 import random
-import json
+import asyncio
 
 class TruthOrDare(commands.Cog):
-    """Truth or Dare Cog"""
-
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=5555567890)  # Use a unique identifier
-        default_global = {
-            "truth_questions": [],
-            "dare_questions": [],
-            "wyr_questions": []
-        }
-        self.config.register_global(**default_global)
-
-        # Load questions from JSON files
-        self.load_questions()
-
-    def load_questions(self):
-        try:
-            with open("truth_questions.json", "r") as f:
-                truth_questions = json.load(f)
-                self.config.truth_questions.set(truth_questions)
-
-            with open("dare_questions.json", "r") as f:
-                dare_questions = json.load(f)
-                self.config.dare_questions.set(dare_questions)
-
-            with open("wyr_questions.json", "r") as f:
-                wyr_questions = json.load(f)
-                self.config.wyr_questions.set(wyr_questions)
-        except FileNotFoundError:
-            pass
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        print("TruthOrDare cog is ready!")
+        self.truth_questions = [
+            "Have you ever cheated on a test?",
+            "What is your most embarrassing childhood memory?",
+            "What is your guilty pleasure TV show?"
+        ]
+        self.dare_questions = [
+            "Do 10 push-ups right now.",
+            "Sing a song in the voice channel.",
+            "Text your crush 'I love you' (and let us know their response)."
+        ]
+        self.wyr_questions = [
+            "Would you rather always be 10 minutes late or always 20 minutes early?",
+            "Would you rather lose the ability to read or lose the ability to speak?",
+            "Would you rather have the power of invisibility or the ability to fly?"
+        ]
 
     @commands.command()
     async def tod(self, ctx, category: str):
-        """Get a random truth, dare, or would you rather question."""
+        """Get a Truth, Dare, or Would You Rather question."""
         if category.lower() == "truth":
-            questions = await self.config.truth_questions()
+            question = random.choice(self.truth_questions)
         elif category.lower() == "dare":
-            questions = await self.config.dare_questions()
+            question = random.choice(self.dare_questions)
         elif category.lower() == "wyr":
-            questions = await self.config.wyr_questions()
+            question = random.choice(self.wyr_questions)
         else:
-            await ctx.send("Invalid category. Use 'truth', 'dare', or 'wyr'.")
+            await ctx.send("Invalid category. Choose 'truth', 'dare', or 'wyr'.")
             return
 
-        if not questions:
-            await ctx.send(f"No {category} questions found.")
-            return
+        message = await ctx.send(f"**{category.capitalize()} Question:**\n{question}")
+        await message.add_reaction("🔄")  # Add a reaction for refreshing questions
 
-        question = random.choice(questions)
-        await ctx.send(f"{ctx.author.mention}, here's your {category} question: {question}")
+        def check(reaction, user):
+            return (
+                user == ctx.author
+                and str(reaction.emoji) == "🔄"
+                and reaction.message.id == message.id
+            )
 
-    @tod.error
-    async def tod_error(self, ctx, error):
-        if isinstance(error, commands.MissingRequiredArgument):
-            await ctx.send("Please specify a category: 'truth', 'dare', or 'wyr'.")
+        try:
+            reaction, _ = await self.bot.wait_for(
+                "reaction_add", check=check, timeout=120.0
+            )  # Wait for a reaction for up to 2 minutes
+        except asyncio.TimeoutError:
+            pass  # No reaction, do nothing
+        else:
+            # Remove old message and send a new one
+            await message.delete()
+            await self.tod(ctx, category)  # Send a new question
 
 def setup(bot):
-    cog = TruthOrDare(bot)
-    bot.add_cog(cog)
+    bot.add_cog(TruthOrDare(bot))
