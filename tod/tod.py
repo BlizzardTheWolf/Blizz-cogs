@@ -2247,26 +2247,30 @@ class TruthOrDare(commands.Cog):
         await message.add_reaction("🔄")  # Add a reaction for refreshing questions
 
         def check(reaction, user):
-            return (
-                user == ctx.author
-                and str(reaction.emoji) == "🔄"
-                and reaction.message.id == message.id
-            )
+    return (
+        user == ctx.author
+        and str(reaction.emoji) == "🔄"
+        and reaction.message.id == message.id
+    )
 
-            try:
-        reaction, _ = await self.bot.wait_for(
-            "reaction_add", check=check, timeout=120.0
-        )  # Wait for a reaction for up to 2 minutes
-    except asyncio.TimeoutError:
-        pass  # No reaction, do nothing
-    else:
-        # Remove old message and send a new one
-        await message.delete()
-        await self.tod(ctx, category)  # Send a new question
+try:
+    reaction, _ = await self.bot.wait_for(
+        "reaction_add", check=check, timeout=120.0
+    )  # Wait for a reaction for up to 2 minutes
+except asyncio.TimeoutError:
+    pass  # No reaction, do nothing
+else:
+    # Remove old message and send a new one
+    await message.delete()
+    await self.tod(ctx, category)  # Send a new question
 
-        # Remove the reaction after 2 minutes
-        await asyncio.sleep(120)
-        await message.clear_reaction("🔄")
+    # Remove the reaction after 2 minutes
+    await asyncio.sleep(120)
+    message = await ctx.fetch_message(message.id)  # Fetch the message again to update reactions
+    for reaction in message.reactions:
+        if str(reaction.emoji) == "🔄":
+            async for user in reaction.users():
+                await reaction.remove(user)
 
 def setup(bot):
     bot.add_cog(TruthOrDare(bot))
