@@ -1,4 +1,4 @@
 from .tod import TruthOrDare
 
-def setup(bot):
-    bot.add_cog(TruthOrDare(bot))
+async def setup(bot):
+    await bot.add_cog(TruthOrDare(bot))
