@@ -10,15 +10,15 @@ class TruthOrDare(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.config = Config.get_conf(self, identifier=1234567890)  # Change identifier
-        self.config.init_custom("truth_questions",  # Custom config section for truth questions
-                                3,  # Default question count
-                                list)
-        self.config.init_custom("dare_questions",   # Custom config section for dare questions
-                                3,  # Default question count
-                                list)
-        self.config.init_custom("wyr_questions",    # Custom config section for would you rather questions
-                                3,  # Default question count
-                                list)
+        self.config.register_custom("truth_questions",  # Custom config section for truth questions
+                                    3,  # Default question count
+                                    list)
+        self.config.register_custom("dare_questions",   # Custom config section for dare questions
+                                    3,  # Default question count
+                                    list)
+        self.config.register_custom("wyr_questions",    # Custom config section for would you rather questions
+                                    3,  # Default question count
+                                    list)
 
     async def initialize_questions(self):
         # Check if the config is empty, if so, initialize it with default questions
