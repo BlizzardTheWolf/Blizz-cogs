@@ -1,6 +1,7 @@
 import discord
 from redbot.core import commands
 import random
+import asyncio
 
 class TruthOrDare(commands.Cog):
     def __init__(self, bot):
@@ -34,7 +35,26 @@ class TruthOrDare(commands.Cog):
             await ctx.send("Invalid category. Choose 'truth', 'dare', or 'wyr'.")
             return
 
-        await ctx.send(f"**{category.capitalize()} Question:**\n{question}")
+        message = await ctx.send(f"**{category.capitalize()} Question:**\n{question}")
+        await message.add_reaction("🔄")  # Add a reaction for refreshing questions
+
+        def check(reaction, user):
+            return (
+                user == ctx.author
+                and str(reaction.emoji) == "🔄"
+                and reaction.message.id == message.id
+            )
+
+        try:
+            reaction, _ = await self.bot.wait_for(
+                "reaction_add", check=check, timeout=120.0
+            )  # Wait for a reaction for up to 2 minutes
+        except asyncio.TimeoutError:
+            pass  # No reaction, do nothing
+        else:
+            # Remove old message and send a new one
+            await message.delete()
+            await self.tod(ctx, category)  # Send a new question
 
 def setup(bot):
     bot.add_cog(TruthOrDare(bot))
