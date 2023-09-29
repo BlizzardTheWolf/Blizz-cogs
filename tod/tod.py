@@ -2232,7 +2232,7 @@ class TruthOrDare(commands.Cog):
 
     @commands.command()
     async def tod(self, ctx, category: str):
-        """Get a Truth, Dare, or Would You Rather question."""
+        """Get a Truth, Dare, or Would You Rather question. Choose 'truth', 'dare', or 'wyr'."""
         if category.lower() == "truth":
             question = random.choice(self.truth_questions)
         elif category.lower() == "dare":
