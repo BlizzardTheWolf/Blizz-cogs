@@ -1,9 +1,8 @@
 import discord
-from discord.ext import commands, tasks
+from discord.ext import commands
 import asyncio
 import random
 
-# Define the Truth or Dare cog
 class TruthOrDare(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
@@ -49,7 +48,6 @@ class TruthOrDare(commands.Cog):
         self.current_question_index = 0
         self.current_question_list = []
 
-    # Function to get the next question
     def get_next_question(self):
         if not self.current_question_list:
             return None
@@ -59,7 +57,6 @@ class TruthOrDare(commands.Cog):
         else:
             return None
 
-    # Function to send the next question
     async def send_next_question(self, ctx):
         next_question = self.get_next_question()
         if next_question:
@@ -67,7 +64,6 @@ class TruthOrDare(commands.Cog):
         else:
             await ctx.send("No more questions in this category. Game over!")
 
-    # Command to start a Truth or Dare game
     @commands.command()
     async def truthordare(self, ctx, question_type: str):
         if question_type not in self.questions:
@@ -80,10 +76,8 @@ class TruthOrDare(commands.Cog):
         self.current_question_index = -1
 
         await self.send_next_question(ctx)
-        # Add the :track_next: emote
         await ctx.message.add_reaction("⏭️")
 
-        # Define a check function for the reaction event
         def check(reaction, user):
             return (
                 user == ctx.author
@@ -99,6 +93,5 @@ class TruthOrDare(commands.Cog):
             await ctx.send("Time's up! Game over.")
             self.current_question_type = None
 
-# Setup function to add the cog to the bot
 def setup(bot):
     bot.add_cog(TruthOrDare(bot))
