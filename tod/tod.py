@@ -1,31 +1,39 @@
 import discord
-from redbot.core import commands, checks, Config
+from redbot.core import commands, Config
 import random
+import json
 
 class TruthOrDare(commands.Cog):
     """Truth or Dare Cog"""
 
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=12345544890)  # Use a unique identifier
+        self.config = Config.get_conf(self, identifier=5555567890)  # Use a unique identifier
         default_global = {
-            "truth_questions": [
-                "What's the most embarrassing thing that's happened to you?",
-                "Have you ever lied to your best friend?",
-                "What's your secret talent?"
-            ],
-            "dare_questions": [
-                "Do your best impersonation of a chicken for 1 minute.",
-                "Call a random contact in your phone and sing 'Happy Birthday.'",
-                "Wear socks on your hands for the next 5 minutes."
-            ],
-            "wyr_questions": [
-                "Would you rather have the ability to fly or be invisible?",
-                "Would you rather always be 10 minutes late or 20 minutes early?",
-                "Would you rather live in a giant desert or a freezing tundra?"
-            ]
+            "truth_questions": [],
+            "dare_questions": [],
+            "wyr_questions": []
         }
         self.config.register_global(**default_global)
+
+        # Load questions from JSON files
+        self.load_questions()
+
+    def load_questions(self):
+        try:
+            with open("truth_questions.json", "r") as f:
+                truth_questions = json.load(f)
+                self.config.truth_questions.set(truth_questions)
+
+            with open("dare_questions.json", "r") as f:
+                dare_questions = json.load(f)
+                self.config.dare_questions.set(dare_questions)
+
+            with open("wyr_questions.json", "r") as f:
+                wyr_questions = json.load(f)
+                self.config.wyr_questions.set(wyr_questions)
+        except FileNotFoundError:
+            pass
 
     @commands.Cog.listener()
     async def on_ready(self):
@@ -42,6 +50,10 @@ class TruthOrDare(commands.Cog):
             questions = await self.config.wyr_questions()
         else:
             await ctx.send("Invalid category. Use 'truth', 'dare', or 'wyr'.")
+            return
+
+        if not questions:
+            await ctx.send(f"No {category} questions found.")
             return
 
         question = random.choice(questions)
