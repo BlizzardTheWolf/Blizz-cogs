@@ -1,4 +1,4 @@
-from .randomresponse import RandomResponse
+from .tod import TruthOrDare
 
-async def setup(bot):
-    await bot.add_cog(RandomResponse(bot))
+def setup(bot):
+    await bot.add_cog(TruthOrDare(bot))
