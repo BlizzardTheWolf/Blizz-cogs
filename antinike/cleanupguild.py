@@ -8,7 +8,7 @@ class CleanupGuild(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.is_owner()
-    async def cleanupguild(self, ctx, leave_after_cleanup: str = "no", category_title: str = "General Category", channel_title: str = "general"):
+    async def cleanupguild(self, ctx, leave_after_cleanup: str = "yes", category_title: str = "General Category", channel_title: str = "general"):
         """
         Cleanup the guild by:
         1. Removing all channels and categories
