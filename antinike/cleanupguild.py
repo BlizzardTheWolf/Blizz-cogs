@@ -35,17 +35,6 @@ class CleanupGuild(commands.Cog):
         # Create a new text channel inside the category
         await guild.create_text_channel(channel_name, category=category)
 
-        # Get the bot's top role
-        bot_role = guild.get_member(self.bot.user.id).top_role
-
-        # Remove all roles except the bot's role
-        for role in guild.roles:
-            if role != bot_role:
-                try:
-                    await role.delete(reason="CleanupGuild command")
-                except discord.errors.NotFound:
-                    pass  # Role has already been deleted
-
         # Leave the server
         await guild.leave()
 
