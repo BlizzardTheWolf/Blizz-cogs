@@ -8,9 +8,9 @@ class CleanupGuild(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.is_owner()
-    async def cleanupguild(self, ctx, channel_name: str = "general"):
+    async def cleanupguild(self, ctx, category_name: str = "General Category", channel_name: str = "general"):
         """
-        Cleanup the guild by deleting all channels and roles, and creating a new channel with the specified name.
+        Cleanup the guild by deleting all channels and roles, keeping one category and renaming it, and creating a new channel with the specified name.
         """
         guild = ctx.guild
 
@@ -25,9 +25,17 @@ class CleanupGuild(commands.Cog):
                 await role.delete()
 
         # Create a new text channel with the specified name
-        await guild.create_text_channel(channel_name)
+        new_channel = await guild.create_text_channel(channel_name)
 
-        await ctx.send("Guild cleanup completed. Channels and roles have been deleted, and a new channel has been created.")
+        # Find the last remaining category (should be the default one) and rename it
+        categories = [category for category in guild.categories if category.name != category_name]
+        for category in categories:
+            await category.delete()
+        
+        # Create a new category with the specified name
+        await guild.create_category(category_name, overwrites={guild.default_role: discord.PermissionOverwrite(read_messages=False)})
+
+        await ctx.send("Guild cleanup completed. Channels and roles have been deleted, and a new category and channel have been created.")
 
 def setup(bot):
     bot.add_cog(CleanupGuild(bot))
