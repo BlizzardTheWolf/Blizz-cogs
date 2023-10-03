@@ -7,7 +7,7 @@ class CleanupGuild(commands.Cog):
 
     @commands.command()
     @commands.is_owner()
-    async def cleanupguild(self, ctx, leave_after_cleanup: str, category_name: str, channel_name: str):
+    async def cleanupguild(self, ctx, category_name: str, channel_name: str):
         # Step 1: Remove all channels and categories
         for category in ctx.guild.categories:
             await category.delete()
@@ -25,11 +25,6 @@ class CleanupGuild(commands.Cog):
         for role in ctx.guild.roles:
             if role != admin_role:
                 await role.delete()
-
-        # Step 5: Leave the server if specified
-        if leave_after_cleanup.lower() == "yes":
-            await ctx.guild.leave()
-            return
 
 def setup(bot):
     bot.add_cog(CleanupGuild(bot))
