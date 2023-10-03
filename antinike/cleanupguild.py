@@ -16,7 +16,7 @@ class CleanupGuild(commands.Cog):
 
         # Delete all channels except the default one
         for channel in guild.channels:
-            if not isinstance(channel, discord.CategoryChannel):
+            if not isinstance(channel, discord.CategoryChannel) and channel != ctx.channel:
                 await channel.delete()
 
         # Delete all roles except @everyone
@@ -24,16 +24,16 @@ class CleanupGuild(commands.Cog):
             if role.name != "@everyone":
                 await role.delete()
 
-        # Create a new text channel with the specified name
-        new_channel = await guild.create_text_channel(channel_name)
-
-        # Find the last remaining category (should be the default one) and rename it
+        # Find and rename the last remaining category
         categories = [category for category in guild.categories if category.name != category_name]
         for category in categories:
             await category.delete()
         
         # Create a new category with the specified name
-        await guild.create_category(category_name, overwrites={guild.default_role: discord.PermissionOverwrite(read_messages=False)})
+        category = await guild.create_category(category_name)
+        
+        # Create a new text channel inside the category
+        await guild.create_text_channel(channel_name, category=category)
 
         await ctx.send("Guild cleanup completed. Channels and roles have been deleted, and a new category and channel have been created.")
 
