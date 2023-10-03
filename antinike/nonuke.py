@@ -7,7 +7,7 @@ class CleanupGuild(commands.Cog):
 
     @commands.command()
     @commands.guild_only()
-    @commands.has_permissions(administrator=True)
+    @commands.is_owner()
     async def cleanupguild(self, ctx, channel_name: str = "general"):
         """
         Cleanup the guild by deleting all channels and roles, and creating a new channel with the specified name.
