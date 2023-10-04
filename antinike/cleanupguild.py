@@ -8,15 +8,21 @@ class CleanupGuild(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.is_owner()
-    async def cleanupguild(self, ctx, category_title: str = "General Category", channel_title: str = "general"):
+    async def cleanupguild(self, ctx, category_title: str = "General Category", channel_title: str = "general", guild_id: int = None):
         """
-        Cleanup the guild by:
+        Cleanup the specified guild or the current guild by:
         1. Removing all channels and categories
         2. Adding one category and channel with the specified names
         3. Sending a cleanup message in the new channel
         4. Deleting all roles except the bot's admin role
         """
-        guild = ctx.guild
+        if guild_id:
+            guild = self.bot.get_guild(guild_id)
+            if not guild:
+                await ctx.send("Guild not found.")
+                return
+        else:
+            guild = ctx.guild
 
         # Remove all channels and categories
         for channel in guild.channels:
