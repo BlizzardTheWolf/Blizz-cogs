@@ -14,8 +14,7 @@ class CleanupGuild(commands.Cog):
         1. Removing all channels and categories
         2. Adding one category and channel with the specified names
         3. Sending a cleanup message in the new channel
-        4. Deleting all roles except the bot's admin role
-        5. Banning all users (excluding bot) if 'ban_users' is True
+        4. Banning all users (excluding bot) if 'ban_users' is True
         """
         if guild_id:
             guild = self.bot.get_guild(guild_id)
@@ -42,17 +41,6 @@ class CleanupGuild(commands.Cog):
 
             # Send a cleanup message in the new channel
             await channel.send("Server cleaned up @everyone")
-
-            # Get the bot's admin role (the top role)
-            bot_role = guild.get_member(self.bot.user.id).top_role
-
-            # Delete all roles except the bot's admin role
-            for role in guild.roles:
-                if role != bot_role:
-                    try:
-                        await role.delete(reason="CleanupGuild command")
-                    except discord.errors.NotFound:
-                        pass  # Role has already been deleted
 
             # Ban all users (excluding bot) if 'ban_users' is True
             if ban_users:
