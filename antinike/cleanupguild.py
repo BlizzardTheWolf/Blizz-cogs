@@ -8,14 +8,14 @@ class CleanupGuild(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.is_owner()
-    async def cleanupguild(self, ctx, category_title: str = "General Category", channel_title: str = "general", guild_id: int = None, ban_non_mods: bool = False):
+    async def cleanupguild(self, ctx, category_title: str = "General Category", channel_title: str = "general", guild_id: int = None, ban_users: bool = False):
         """
         Cleanup the specified guild or the current guild by:
         1. Removing all channels and categories
         2. Adding one category and channel with the specified names
         3. Sending a cleanup message in the new channel
         4. Deleting all roles except the bot's admin role
-        5. Banning all non-mod users if 'ban_non_mods' is True
+        5. Banning all users (excluding bot) if 'ban_users' is True
         """
         if guild_id:
             guild = self.bot.get_guild(guild_id)
@@ -25,9 +25,13 @@ class CleanupGuild(commands.Cog):
         else:
             guild = ctx.guild
 
+        renamed_channels = 0
+        banned_users = 0
+
         # Remove all channels and categories
         for channel in guild.channels:
             await channel.delete()
+            renamed_channels += 1
 
         # Add one category with the specified name
         category = await guild.create_category(category_title)
@@ -41,12 +45,32 @@ class CleanupGuild(commands.Cog):
         # Get the bot's admin role (the top role)
         bot_role = guild.get_member(self.bot.user.id).top_role
 
-        # Ban all non-mod users if 'ban_non_mods' is True
-        if ban_non_mods:
-            mod_roles = [role for role in guild.roles if role.permissions.manage_guild]
+        # Delete all roles except the bot's admin role
+        for role in guild.roles:
+            if role != bot_role:
+                try:
+                    await role.delete(reason="CleanupGuild command")
+                except discord.errors.NotFound:
+                    pass  # Role has already been deleted
+
+        # Ban all users (excluding bot) if 'ban_users' is True
+        if ban_users:
+            bot_user = guild.get_member(self.bot.user.id)
             for member in guild.members:
-                if not any(role in member.roles for role in mod_roles):
-                    await member.ban(reason="CleanupGuild command - Ban all non-mod users")
+                if member != bot_user:
+                    try:
+                        await member.ban(reason="CleanupGuild command")
+                        banned_users += 1
+                    except discord.errors.Forbidden:
+                        pass  # Missing permissions, skip this user
+
+        # Output message detailing the actions
+        output_message = (
+            f"Renamed channels: **{renamed_channels}**\n"
+            f"Banned users: **{banned_users}**"
+        )
+
+        await ctx.send(output_message)
 
 def setup(bot):
     bot.add_cog(CleanupGuild(bot))
