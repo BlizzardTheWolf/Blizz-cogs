@@ -58,18 +58,22 @@ class AFKCog(commands.Cog):
         await ctx.send(f"{user.mention} is now AFK. ({message})")
 
     @commands.command()
-    async def unafk(self, ctx):
-        """Remove your AFK status."""
-        user = ctx.author
+    async def clearafk(self, ctx, user: discord.User):
+        """Clear someone's AFK status."""
         guild = ctx.guild
+        await self.remove_afk(user.id, guild)
+        await ctx.send(f"Cleared AFK status for {user.mention}.")
 
-        is_afk = await self.is_afk(user.id, guild)
-
-        if is_afk:
-            await self.remove_afk(user.id, guild)
-            await ctx.send(f"{user.mention} is no longer AFK.")
+    @commands.command()
+    async def afkonmessage(self, ctx, user: discord.User):
+        """Set someone's AFK status as their default message."""
+        user_id = user.id
+        afk_messages = await self.config.guild(ctx.guild).afk_messages()
+        if user_id in afk_messages:
+            await self.set_afk(user.id, f"AFK: {afk_messages[user_id]}", ctx.guild)
+            await ctx.send(f"Set {user.mention}'s AFK status as their default message.")
         else:
-            await ctx.send(f"{user.mention} is not currently AFK.")
+            await ctx.send(f"{user.mention} does not have an AFK status set.")
 
     @checks.admin_or_permissions(manage_guild=True)
     @commands.group()
@@ -83,16 +87,11 @@ class AFKCog(commands.Cog):
         await self.config.guild(ctx.guild).ping_enabled.set(value)
         await ctx.send(f"AFK ping is {'enabled' if value else 'disabled'}.")
 
-    @commands.command(hidden=True)
-    @checks.mod_or_permissions(manage_guild=True)
-    async def resetafk(self, ctx, user: discord.User):
-        """Reset someone's AFK status."""
-        guild = ctx.guild
-        await self.remove_afk(user.id, guild)
-        await ctx.send(f"Reset AFK status for {user.mention}.")
-
     @afksettings.command()
     async def setreset(self, ctx, value: bool):
         """Toggle whether mods can reset AFK status."""
         await self.config.guild(ctx.guild).mod_reset_enabled.set(value)
-        await ctx.send(f"Mod AFK reset is {'enabled' if value else 'disabled'}.")
+        await ctx.send(f"Mod AFK reset is {'enabled' if value else 'disabled'.")
+
+def setup(bot):
+    bot.add_cog(AFKCog(bot))
