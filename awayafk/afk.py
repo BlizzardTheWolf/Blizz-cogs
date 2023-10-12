@@ -91,7 +91,7 @@ class AFKCog(commands.Cog):
     async def setreset(self, ctx, value: bool):
         """Toggle whether mods can reset AFK status."""
         await self.config.guild(ctx.guild).mod_reset_enabled.set(value)
-        await ctx.send(f"Mod AFK reset is {'enabled' if value else 'disabled'.")
+        await ctx.send(f"Mod AFK reset is {'enabled' if value else 'disabled'}.")
 
 def setup(bot):
     bot.add_cog(AFKCog(bot))
