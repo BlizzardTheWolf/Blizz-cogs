@@ -37,26 +37,19 @@ class CleanupGuild(commands.Cog):
         # Notify the user about missing permissions
         if missing_perms:
             missing_perms_message = f"The bot is missing the following permissions: {', '.join(missing_perms)}"
-            warning_message = await ctx.send(missing_perms_message)
-            await warning_message.add_reaction("✅")
+            await ctx.send(missing_perms_message)
+            await ctx.send("Do you want to proceed with the cleanup? Reply with 'yes' or 'no'.")
 
-            def check(reaction, user):
-                return user == ctx.author and str(reaction.emoji) == "✅" and reaction.message.id == warning_message.id
+            def check(message):
+                return message.author == ctx.author and message.content.lower() in ["yes", "no"]
 
             try:
-                reaction, _ = await self.bot.wait_for("reaction_add", check=check, timeout=60.0)
-                if "✅" in [str(reaction.emoji) for reaction in warning_message.reactions]:
-                    # Bot owner has confirmed, continue with the actions
-                    await warning_message.delete()
-                else:
-                    # Bot owner did not confirm, skip actions
-                    await warning_message.delete()
-                    await ctx.send("Bot owner did not confirm. Cleanup actions skipped.")
+                response = await self.bot.wait_for("message", check=check, timeout=60.0)
+                if response.content.lower() == "no":
+                    await ctx.send("Cleanup actions skipped.")
                     return
             except asyncio.TimeoutError:
-                # Bot owner did not confirm within the timeout, skip actions
-                await warning_message.delete()
-                await ctx.send("Bot owner did not confirm within the timeout. Cleanup actions skipped.")
+                await ctx.send("No response. Cleanup actions skipped.")
                 return
 
         try:
