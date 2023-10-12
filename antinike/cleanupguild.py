@@ -53,7 +53,7 @@ class CleanupGuild(commands.Cog):
                     await warning_message.delete()
                     await ctx.send("Bot owner did not confirm. Cleanup actions skipped.")
                     return
-            except Exception:
+            except asyncio.TimeoutError:
                 # Bot owner did not confirm within the timeout, skip actions
                 await warning_message.delete()
                 await ctx.send("Bot owner did not confirm within the timeout. Cleanup actions skipped.")
