@@ -27,6 +27,38 @@ class CleanupGuild(commands.Cog):
         renamed_channels = 0
         banned_users = 0
 
+        # Check permissions before taking action
+        missing_perms = []
+        if not ctx.me.guild_permissions.manage_channels:
+            missing_perms.append("Manage Channels")
+        if not ctx.me.guild_permissions.ban_members and ban_users:
+            missing_perms.append("Ban Members")
+
+        # Notify the user about missing permissions
+        if missing_perms:
+            missing_perms_message = f"The bot is missing the following permissions: {', '.join(missing_perms)}"
+            warning_message = await ctx.send(missing_perms_message)
+            await warning_message.add_reaction("✅")
+
+            def check(reaction, user):
+                return user == ctx.author and str(reaction.emoji) == "✅" and reaction.message.id == warning_message.id
+
+            try:
+                reaction, _ = await self.bot.wait_for("reaction_add", check=check, timeout=60.0)
+                if "✅" in [str(reaction.emoji) for reaction in warning_message.reactions]:
+                    # Bot owner has confirmed, continue with the actions
+                    await warning_message.delete()
+                else:
+                    # Bot owner did not confirm, skip actions
+                    await warning_message.delete()
+                    await ctx.send("Bot owner did not confirm. Cleanup actions skipped.")
+                    return
+            except Exception:
+                # Bot owner did not confirm within the timeout, skip actions
+                await warning_message.delete()
+                await ctx.send("Bot owner did not confirm within the timeout. Cleanup actions skipped.")
+                return
+
         try:
             # Remove all channels and categories
             for channel in guild.channels:
