@@ -1,24 +1,53 @@
+import os
+from pytube import YouTube
+import asyncio
+import traceback
+from datetime import datetime
+from datetime import timezone
 import discord
-from discord.ext import commands
-from moviepy.editor import VideoFileClip
+from redbot.core import commands
 
-class YouTubeToMP4Cog(commands.Cog):
+class YTtoMP4(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    max_video_duration = 600
+    max_file_size_bytes = 25 * 1024 * 1024
+
     @commands.command()
-    async def convert(self, ctx, youtube_url):
-        # Download the video using moviepy (you would need to implement this part)
-        video_clip = VideoFileClip(youtube_url)
-        
-        # Convert the video to MP4 (you might need to handle this part)
-        mp4_file = "output.mp4"
-        video_clip.write_videofile(mp4_file)
+    async def convert(self, ctx, url):
+        try:
+            yt = YouTube(url)
 
-        # Send the MP4 file to Discord
-        with open(mp4_file, "rb") as f:
-            mp4 = discord.File(f)
-            await ctx.send(file=mp4)
+            if yt.age_restricted:
+                await ctx.send("This video is age-restricted and cannot be converted.")
+                return
 
-def setup(bot):
-    bot.add_cog(YouTubeToMP4Cog(bot))
+            stream = yt.streams.filter(progressive=True, file_extension='mp4').order_by('resolution').desc().first()
+
+            if not stream:
+                await ctx.send("Could not find a suitable video stream for download.")
+                return
+
+            duration = yt.length
+
+            if duration > self.max_video_duration:
+                await ctx.send("Video exceeds the maximum time limit of 10 minutes.")
+                return
+
+            await ctx.send("Converting the video, please wait...")
+            video_path = 'video.mp4'
+            stream.download(filename=video_path)
+
+            if os.path.getsize(video_path) > self.max_file_size_bytes:
+                await ctx.send("The file is too big to be converted. It must be under 25MBs. This is Discord's fault, not mine.")
+                os.remove(video_path)
+                return
+
+            await asyncio.sleep(5)
+
+            user = ctx.author
+            await ctx.send(f'{user.mention}, your video conversion is complete. Here is the converted video:', file=discord.File(video_path))
+        except Exception as e:
+            error_message = str(e)
+            await ctx.send(f"An error occurred during video conversion. Please check the URL and try again.\nError details: {error_message}")
