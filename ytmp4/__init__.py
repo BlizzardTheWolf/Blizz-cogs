@@ -1,5 +1,4 @@
-from .youtubetomp4 import YouTubeToMP4Cog
+from .yt_to_mp4 import YTtoMP4
 
-async def setup(bot):
-    cog = YouTubeToMP4Cog(bot)
-    await bot.add_cog(cog)
+def setup(bot):
+    bot.add_cog(YTtoMP4(bot))
