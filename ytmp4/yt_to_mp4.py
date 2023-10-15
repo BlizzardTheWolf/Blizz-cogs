@@ -36,8 +36,10 @@ class YTtoMP4(commands.Cog):
                 return
 
             await ctx.send("Converting the video, please wait...")
-            video_path = os.path.join(os.getcwd(), f'video_{ctx.author.id}.mp4')  # Save the video with a unique filename
-            stream.download(filename=video_path)
+            user_video_folder = os.path.join(os.getcwd(), f'video_{ctx.author.id}')
+            os.makedirs(user_video_folder, exist_ok=True)
+            video_path = os.path.join(user_video_folder, f'{yt.title}-{ctx.author.id}.mp4')  # Set the video file path
+            stream.download(output_path=user_video_folder, filename=f'{yt.title}.mp4')
 
             if os.path.getsize(video_path) > self.max_file_size_bytes:
                 await ctx.send("The file is too big to be converted. It must be under 25MBs. This is Discord's fault, not mine.")
