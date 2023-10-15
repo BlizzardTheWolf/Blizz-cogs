@@ -9,7 +9,7 @@ class YTMP4Cog(commands.Cog):
         self.bot = bot
 
     @commands.command()
-    async def convert(self, ctx, url):
+    async def convert(self, ctx, url, format="mp4"):
         try:
             yt = YouTube(url)
 
@@ -17,10 +17,14 @@ class YTMP4Cog(commands.Cog):
                 await ctx.send("This video is age-restricted and cannot be converted.")
                 return
 
-            stream = yt.streams.filter(progressive=True, file_extension='mp4').order_by('resolution').desc().first()
+            if format not in ("mp4", "mp3"):
+                await ctx.send("Invalid format. Please specify either 'mp4' or 'mp3'.")
+                return
+
+            stream = yt.streams.filter(progressive=True, file_extension=format).order_by('resolution').desc().first()
 
             if not stream:
-                await ctx.send("Could not find a suitable video stream for download.")
+                await ctx.send(f"Could not find a suitable {format} stream for download.")
                 return
 
             duration = yt.length
@@ -29,14 +33,14 @@ class YTMP4Cog(commands.Cog):
                 await ctx.send("Video exceeds the maximum time limit of 10 minutes.")
                 return
 
-            await ctx.send("Converting the video, please wait...")
-            video_path = f'{yt.title}-{ctx.author.id}.mp4'
+            await ctx.send(f"Converting the video to {format}, please wait...")
+            video_path = f'{yt.title}-{ctx.author.id}.{format}'
             stream.download(output_path="/mnt/converter", filename=video_path)
 
             await asyncio.sleep(5)
 
             user = ctx.message.author
-            await ctx.send(f'{user.mention}, your video conversion is complete. Here is the converted video:', file=discord.File(f"/mnt/converter/{video_path}"))
+            await ctx.send(f'{user.mention}, your video conversion to {format} is complete. Here is the converted video:', file=discord.File(f"/mnt/converter/{video_path}"))
 
             # Remove the file after 10 minutes
             await asyncio.sleep(600)
