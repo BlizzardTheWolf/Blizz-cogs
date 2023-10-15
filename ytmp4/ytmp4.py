@@ -1,13 +1,8 @@
 import os
-import traceback
-import datetime
-from datetime import timezone
 import discord
-from discord.ext import commands
+from redbot.core import commands
 from pytube import YouTube
-
-max_video_duration = 600
-max_file_size_bytes = 25 * 1024 * 1024
+import asyncio
 
 class YTMP4Cog(commands.Cog):
     def __init__(self, bot):
@@ -30,23 +25,22 @@ class YTMP4Cog(commands.Cog):
 
             duration = yt.length
 
-            if duration > max_video_duration:
+            if duration > 600:
                 await ctx.send("Video exceeds the maximum time limit of 10 minutes.")
                 return
 
             await ctx.send("Converting the video, please wait...")
-            video_path = f'video-{ctx.author.id}.mp4'
-            stream.download(filename=video_path)
-
-            if os.path.getsize(video_path) > max_file_size_bytes:
-                await ctx.send("The file is too big to be converted. It must be under 25MBs. This is Discord's fault, not mine.")
-                os.remove(video_path)
-                return
+            video_path = f'{yt.title}-{ctx.author.id}.mp4'
+            stream.download(output_path="/mnt/converter", filename=video_path)
 
             await asyncio.sleep(5)
 
-            user = ctx.author
-            await ctx.send(f'{user.mention}, your video conversion is complete. Here is the converted video:', file=discord.File(video_path))
+            user = ctx.message.author
+            await ctx.send(f'{user.mention}, your video conversion is complete. Here is the converted video:', file=discord.File(f"/mnt/converter/{video_path}"))
+
+            # Remove the file after 10 minutes
+            await asyncio.sleep(600)
+            os.remove(f"/mnt/converter/{video_path}")
 
         except Exception as e:
             error_message = str(e)
