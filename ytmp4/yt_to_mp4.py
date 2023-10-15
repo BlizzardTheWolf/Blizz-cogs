@@ -36,7 +36,7 @@ class YTtoMP4(commands.Cog):
                 return
 
             await ctx.send("Converting the video, please wait...")
-            video_path = os.path.join(os.getcwd(), 'video.mp4')  # Save the video in the bot's current working directory
+            video_path = os.path.join(os.getcwd(), f'video_{ctx.author.id}.mp4')  # Save the video with a unique filename
             stream.download(filename=video_path)
 
             if os.path.getsize(video_path) > self.max_file_size_bytes:
