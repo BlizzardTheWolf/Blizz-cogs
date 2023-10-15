@@ -1,10 +1,15 @@
-import discord
-from redbot.core import commands
-from pytube import YouTube
-import asyncio
 import os
+import traceback
+import datetime
+from datetime import timezone
+import discord
+from discord.ext import commands
+from pytube import YouTube
 
-class YouTubeConverter(commands.Cog):
+max_video_duration = 600
+max_file_size_bytes = 25 * 1024 * 1024
+
+class YTMP4Cog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -25,30 +30,27 @@ class YouTubeConverter(commands.Cog):
 
             duration = yt.length
 
-            if duration > 600:
+            if duration > max_video_duration:
                 await ctx.send("Video exceeds the maximum time limit of 10 minutes.")
                 return
 
             await ctx.send("Converting the video, please wait...")
+            video_path = f'video-{ctx.author.id}.mp4'
+            stream.download(filename=video_path)
 
-            user_video_folder = os.path.join('/mnt/converter', f'video_{ctx.author.id}')
-            os.makedirs(user_video_folder, exist_ok=True)
-
-            video_path = os.path.join(user_video_folder, f'{yt.title}-{ctx.author.id}.mp4')
-            stream.download(output_path=user_video_folder, filename=f'{yt.title}-{ctx.author.id}.mp4')
-
-            if os.path.getsize(video_path) > 25 * 1024 * 1024:
+            if os.path.getsize(video_path) > max_file_size_bytes:
                 await ctx.send("The file is too big to be converted. It must be under 25MBs. This is Discord's fault, not mine.")
                 os.remove(video_path)
                 return
 
             await asyncio.sleep(5)
 
-            user = ctx.message.author
+            user = ctx.author
             await ctx.send(f'{user.mention}, your video conversion is complete. Here is the converted video:', file=discord.File(video_path))
+
         except Exception as e:
             error_message = str(e)
             await ctx.send(f"An error occurred during video conversion. Please check the URL and try again.\nError details: {error_message}")
 
 def setup(bot):
-    bot.add_cog(YouTubeConverter(bot))
+    bot.add_cog(YTMP4Cog(bot))
