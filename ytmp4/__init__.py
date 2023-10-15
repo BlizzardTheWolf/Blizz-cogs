@@ -1,4 +1,4 @@
-from .yt_to_mp4 import YTtoMP4
+from .ytmp4 import YTMP4Cog
 
 async def setup(bot):
-    await bot.add_cog(YTtoMP4(bot))
+    await bot.add_cog(YTMP4Cog(bot))
