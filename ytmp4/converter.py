@@ -1,8 +1,8 @@
 import os
 import discord
 from redbot.core import commands
-import asyncio
 from pytube import YouTube
+import asyncio
 
 class YTMP4Cog(commands.Cog):
     def __init__(self, bot):
@@ -20,7 +20,7 @@ class YTMP4Cog(commands.Cog):
             stream = yt.streams.filter(progressive=True, file_extension="mp4").order_by('resolution').desc().first()
 
             if not stream:
-                await ctx.send("Could not find a suitable MP4 stream for download.")
+                await ctx.send("Could not find a suitable mp4 stream for download.")
                 return
 
             duration = yt.length
@@ -29,17 +29,18 @@ class YTMP4Cog(commands.Cog):
                 await ctx.send("Video exceeds the maximum time limit of 10 minutes.")
                 return
 
-            await ctx.send("Converting the video to MP4, please wait...")
+            await ctx.send("Converting the video to mp4, please wait...")
 
-            # Extract the video code from the URL
-            video_code = yt.video_id
-            video_path = f'/mnt/converter/{video_code}.mp4'
+            # Generate a unique filename
+            video_code = stream.video_id + ".mp4"
+            video_path = os.path.join("/mnt/converter", video_code)
+
             stream.download(output_path="/mnt/converter", filename=video_code)
 
             await asyncio.sleep(5)
 
             user = ctx.message.author
-            await ctx.send(f'{user.mention}, your video conversion to MP4 is complete. Here is the converted video:', file=discord.File(video_path))
+            await ctx.send(f'{user.mention}, your video conversion to mp4 is complete. Here is the converted video:', file=discord.File(video_path))
 
             # Remove the file after 10 minutes
             await asyncio.sleep(600)
