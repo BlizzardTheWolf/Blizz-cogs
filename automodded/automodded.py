@@ -4,7 +4,7 @@ from redbot.core import Config, checks, commands
 class AFK(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=123456789)
+        self.config = Config.get_conf(self, identifier=123496789)
         default_global = {}
         self.config.register_global(**default_global)
 
