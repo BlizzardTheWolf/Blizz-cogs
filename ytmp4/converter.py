@@ -1,44 +1,61 @@
-import discord
-from discord.ext import commands
-from pytube import YouTube
 import asyncio
+import os
+import subprocess
+from discord.ext import commands
 
-class ConverterCog(commands.Cog):
+class YTMP4Cog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(name='convert')
-    async def convert(self, ctx, url, format='mp4'):
+    async def _convert_to_mp4(self, ctx, url):
+        await ctx.trigger_typing()  # Show "typing" status while converting
+
+        # Extract the video ID from the URL
+        video_id = url.split("v=")[1]
+
+        # Set the default format to mp4
+        format_type = "mp4"
+
+        # Check if mp3 is specified in the command
+        if format_type == "mp3":
+            ffmpeg_command = [
+                "ffmpeg", "-i", f"/mnt/converter/{video_id}.mp4", f"/mnt/converter/{video_id}.mp3"
+            ]
+            try:
+                subprocess.run(ffmpeg_command, check=True)
+                output_file = f"/mnt/converter/{video_id}.mp3"
+            except subprocess.CalledProcessError:
+                await ctx.send("An error occurred during conversion.")
+                return
+        else:
+            output_file = f"/mnt/converter/{video_id}.mp4"
+
+        # Return the converted file
+        return output_file
+
+    @commands.command()
+    async def convert(self, ctx, url, format_type=None):
+        if format_type is None:
+            format_type = "mp4"
+
+        if format_type not in ["mp4", "mp3"]:
+            await ctx.send("Invalid format. Use 'mp4' or 'mp3'.")
+            return
+
+        await ctx.trigger_typing()
+
+        if not os.path.exists('/mnt/converter'):
+            os.makedirs('/mnt/converter')
+
         try:
-            yt = YouTube(url)
-
-            if yt.age_restricted:
-                await ctx.send("This video is age-restricted and cannot be converted.")
-                return
-
-            stream = yt.streams.filter(progressive=True, file_extension=format).order_by('resolution').desc().first()
-
-            if not stream:
-                await ctx.send("Could not find a suitable video stream for download.")
-                return
-
-            duration = yt.length
-
-            if duration > 600:
-                await ctx.send("Video exceeds the maximum time limit of 10 minutes.")
-                return
-
-            await ctx.trigger_typing()  # Show "typing" status while converting
-
-            video_path = f'/mnt/converter/{yt.title}-{ctx.author.id}.{format}'
-            stream.download(output_path='/mnt/converter', filename=video_path)
-
-            await asyncio.sleep(5)
-            user = ctx.author
-            await ctx.send(f'{user.mention}, your video conversion is complete. Here is the converted video:', file=discord.File(video_path))
+            converted_file = await self._convert_to_mp4(ctx, url)
         except Exception as e:
-            error_message = str(e)
-            await ctx.send(f"An error occurred during video conversion. Please check the URL and try again.\nError details: {error_message}")
+            await ctx.send(f"An error occurred during video conversion. Error details: {str(e)}")
+            return
+
+        await ctx.send("Video conversion complete.")
+        await ctx.send(file=discord.File(converted_file))
+
 
 def setup(bot):
-    bot.add_cog(ConverterCog(bot))
+    bot.add_cog(YTMP4Cog(bot))
