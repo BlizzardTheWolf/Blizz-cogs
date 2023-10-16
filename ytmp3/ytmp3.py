@@ -27,10 +27,12 @@ class YTMP3Cog(commands.Cog):
 
             await ctx.send("Converting the video to MP3, please wait...")
 
-            # Sanitize the video title
-            title = re.sub(r'[\/:*?"<>|]', '', yt.title)
-            title = title.replace(" ", "_")  # Replace spaces with underscores
-            title = re.sub(r'[(|)]', '_', title)  # Replace parentheses with underscores
+            # Get the video title directly from YouTube
+            title = re.sub(r'[^a-zA-Z0-9]', '_', yt.title)  # Replace special characters with underscores
+            title = re.sub(r'_+', '_', title)  # Replace consecutive underscores with a single underscore
+            title = title.strip('_')  # Remove leading/trailing underscores
+            title = title[:100]  # Limit the filename length to avoid issues
+
             video_path = f'/mnt/converter/{title}-{ctx.author.id}.mp4'
             audio_path = f'/mnt/converter/{title}-{ctx.author.id}.mp3'
 
