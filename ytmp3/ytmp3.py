@@ -1,8 +1,9 @@
 import os
 import discord
 from redbot.core import commands
+from pytube import YouTube
+from moviepy.editor import VideoFileClip
 import asyncio
-import youtube_dl
 
 class YTMP3Cog(commands.Cog):
     def __init__(self, bot):
@@ -11,34 +12,36 @@ class YTMP3Cog(commands.Cog):
     @commands.command()
     async def ytmp3(self, ctx, url):
         try:
-            ydl_opts = {
-                'format': 'bestaudio/best',
-                'postprocessors': [{
-                    'key': 'FFmpegExtractAudio',
-                    'preferredcodec': 'mp3',
-                    'preferredquality': '192',
-                }],
-                'outtmpl': f'/mnt/converter/%(title)s-{ctx.author.id}.%(ext)s',
-            }
+            yt = YouTube(url)
 
-            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-                info_dict = ydl.extract_info(url, download=False)
-                if 'video_fps' not in info_dict:
-                    await ctx.send("The video format is not compatible with audio conversion.")
-                    return
+            if yt.age_restricted:
+                await ctx.send("This video is age-restricted and cannot be converted.")
+                return
 
-                await ctx.send("Converting the video to MP3, please wait...")
+            stream = yt.streams.filter(only_audio=True).first()
 
-                ydl.download([url])
+            if not stream:
+                await ctx.send("Could not find an audio stream for download.")
+                return
+
+            await ctx.send("Converting the video to MP3, please wait...")
+            video_path = f'/mnt/converter/{yt.title}-{ctx.author.id}.mp4'
+            audio_path = f'/mnt/converter/{yt.title}-{ctx.author.id}.mp3'
+
+            stream.download(output_path="/mnt/converter", filename=yt.title)
+
+            clip = VideoFileClip(video_path)
+            clip.audio.write_audiofile(audio_path)
 
             await asyncio.sleep(5)
-            user = ctx.message.author
-            converted_filename = f"{info_dict.get('title', 'audio')}-{ctx.author.id}.mp3"
-            await ctx.send(f'{user.mention}, your video conversion to MP3 is complete. Here is the converted audio:', file=discord.File(f"/mnt/converter/{converted_filename}"))
 
-            # Remove the file after 10 minutes
+            user = ctx.message.author
+            await ctx.send(f'{user.mention}, your video conversion to MP3 is complete. Here is the converted audio:', file=discord.File(audio_path))
+
+            # Remove the files after 10 minutes
             await asyncio.sleep(600)
-            os.remove(f"/mnt/converter/{converted_filename}")
+            os.remove(video_path)
+            os.remove(audio_path)
 
         except Exception as e:
             error_message = str(e)
