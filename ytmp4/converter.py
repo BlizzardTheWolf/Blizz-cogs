@@ -1,70 +1,42 @@
-from redbot.core import commands
-from pytube import YouTube
-from moviepy.editor import VideoFileClip
-import discord
-import os
+@commands.command()
+async def convert(self, ctx, url, conversion_type="mp4"):
+    try:
+        yt = YouTube(url)
 
-class ConverterCog(commands.Cog):
-    def __init__(self, bot):
-        self.bot = bot
-        self.max_video_duration = 600
-        self.max_file_size_bytes = 25 * 1024 * 1024
+        if yt.age_restricted:
+            await ctx.send("This video is age-restricted and cannot be converted.")
+            return
 
-    @commands.command()
-    async def convert(self, ctx, url, format='mp4'):
-        user = ctx.author
-        await ctx.trigger_typing()  # Show "typing" status while converting
+        stream = yt.streams.filter(progressive=True, file_extension='mp4').order_by('resolution').desc().first()
 
-        try:
-            yt = YouTube(url)
+        if not stream:
+            await ctx.send("Could not find a suitable video stream for download.")
+            return
 
-            if yt.age_restricted:
-                await ctx.send("This video is age-restricted and cannot be converted.")
-                return
+        duration = yt.length
 
-            if format not in ['mp4', 'mp3']:
-                await ctx.send("Invalid format. Supported formats are 'mp4' and 'mp3'.")
-                return
+        if duration > max_video_duration:
+            await ctx.send("Video exceeds the maximum time limit of 10 minutes.")
+            return
 
-            stream = yt.streams.filter(progressive=True, file_extension=format).order_by('resolution').desc().first()
+        await ctx.send("Converting the video, please wait...")
+        video_name = yt.title
+        video_path = f'/mnt/converter/{video_name}-{ctx.author.id}.{conversion_type}'
 
-            if not stream:
-                await ctx.send(f"Could not find a suitable {format} stream for download.")
-                return
-
-            duration = yt.length
-
-            if duration > self.max_video_duration:
-                await ctx.send("Video exceeds the maximum time limit of 10 minutes.")
-                return
-
-            await ctx.send(f"Converting the video to {format}, please wait...")
-
-            video_path = f'video.{format}'
+        if conversion_type == "mp4":
             stream.download(filename=video_path)
+        elif conversion_type == "mp3":
+            os.system(f'ffmpeg -i "{video_path}" "{video_path}.mp3"')
+            video_path = f'{video_path}.mp3'
 
-            if os.path.getsize(video_path) > self.max_file_size_bytes:
-                await ctx.send(f"The file is too big to be converted. It must be under 25MBs. This is Discord's fault, not mine.")
-                os.remove(video_path)
-                return
-
-            if format == 'mp3':
-                audio_path = 'audio.mp3'
-                clip = VideoFileClip(video_path)
-                clip.audio.write_audiofile(audio_path, codec='mp3')
-                clip.close()
-
-                await ctx.send(f'{user.mention}, your video conversion is complete. Here is the converted audio:', file=discord.File(audio_path))
-
-                os.remove(audio_path)
-            else:
-                await ctx.send(f'{user.mention}, your video conversion is complete. Here is the converted video:', file=discord.File(video_path))
-
+        if os.path.getsize(video_path) > max_file_size_bytes:
+            await ctx.send("The file is too big to be converted. It must be under 25MBs. This is Discord's fault, not mine.")
             os.remove(video_path)
+            return
 
-        except Exception as e:
-            error_message = str(e)
-            await ctx.send(f"An error occurred during video conversion. Please check the URL and try again.\nError details: {error_message}")
-
-def setup(bot):
-    bot.add_cog(ConverterCog(bot))
+        await ctx.send(f'{ctx.author.mention}, your video conversion is complete. Here is the converted video:', file=discord.File(video_path))
+        await ctx.trigger_typing()
+        os.remove(video_path)  # Clean up the converted file
+    except Exception as e:
+        error_message = str(e)
+        await ctx.send(f"An error occurred during video conversion. Please check the URL and try again.\nError details: {error_message}")
