@@ -25,10 +25,12 @@ class YTMP3Cog(commands.Cog):
                 return
 
             await ctx.send("Converting the video to MP3, please wait...")
+
             video_path = f'/mnt/converter/{yt.title}-{ctx.author.id}.mp4'
             audio_path = f'/mnt/converter/{yt.title}-{ctx.author.id}.mp3'
 
-            stream.download(output_path="/mnt/converter", filename=yt.title)
+            video_stream = yt.streams.get_highest_resolution()
+            video_stream.download(output_path="/mnt/converter")
 
             clip = VideoFileClip(video_path)
             clip.audio.write_audiofile(audio_path)
