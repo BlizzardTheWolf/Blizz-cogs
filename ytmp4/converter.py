@@ -9,7 +9,7 @@ class YTMP4Cog(commands.Cog):
         self.bot = bot
 
     @commands.command()
-    async def ytmp4(self, ctx, url, format="mp4"):
+    async def ytmp4(self, ctx, url):
         try:
             yt = YouTube(url)
 
@@ -17,9 +17,7 @@ class YTMP4Cog(commands.Cog):
                 await ctx.send("This video is age-restricted and cannot be converted.")
                 return
 
-            if format not in ("mp4", "mp3"):
-                await ctx.send("Invalid format. Please specify either 'mp4' or 'mp3'.")
-                return
+            format = "mp4"
 
             stream = yt.streams.filter(progressive=True, file_extension=format).order_by('resolution').desc().first()
 
