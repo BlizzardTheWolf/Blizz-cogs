@@ -1,59 +1,70 @@
-import discord
 from redbot.core import commands
-import asyncio
-from redbot.core.bot import Red
-import os
-from moviepy.editor import VideoFileClip
 from pytube import YouTube
+from moviepy.editor import VideoFileClip
+import discord
+import os
 
-class YTMP4Cog(commands.Cog):
-    def __init__(self, bot: Red):
+class ConverterCog(commands.Cog):
+    def __init__(self, bot):
         self.bot = bot
+        self.max_video_duration = 600
+        self.max_file_size_bytes = 25 * 1024 * 1024
 
     @commands.command()
-    async def convert(self, ctx: commands.Context, url: str, output_format: str = "mp4"):
-        valid_formats = ["mp4", "mp3"]
-        output_format = output_format.lower()
-
-        if output_format not in valid_formats:
-            await ctx.send("Invalid output format. Please use 'mp4' or 'mp3'.")
-            return
+    async def convert(self, ctx, url, format='mp4'):
+        user = ctx.author
+        await ctx.trigger_typing()  # Show "typing" status while converting
 
         try:
             yt = YouTube(url)
-            stream = yt.streams.get_highest_resolution()
+
+            if yt.age_restricted:
+                await ctx.send("This video is age-restricted and cannot be converted.")
+                return
+
+            if format not in ['mp4', 'mp3']:
+                await ctx.send("Invalid format. Supported formats are 'mp4' and 'mp3'.")
+                return
+
+            stream = yt.streams.filter(progressive=True, file_extension=format).order_by('resolution').desc().first()
 
             if not stream:
-                await ctx.send("Could not find a suitable video stream for download.")
+                await ctx.send(f"Could not find a suitable {format} stream for download.")
                 return
 
-            video_path = f'/mnt/converter/{yt.title}-u{ctx.author.id}.{output_format}'
+            duration = yt.length
 
+            if duration > self.max_video_duration:
+                await ctx.send("Video exceeds the maximum time limit of 10 minutes.")
+                return
+
+            await ctx.send(f"Converting the video to {format}, please wait...")
+
+            video_path = f'video.{format}'
             stream.download(filename=video_path)
 
-            if os.path.getsize(video_path) > 25 * 1024 * 1024:
-                await ctx.send("The file is too big to be converted. It must be under 25MB. This is Discord's file size limit.")
+            if os.path.getsize(video_path) > self.max_file_size_bytes:
+                await ctx.send(f"The file is too big to be converted. It must be under 25MBs. This is Discord's fault, not mine.")
                 os.remove(video_path)
                 return
 
-            if output_format == "mp3":
-                video = VideoFileClip(video_path)
-                audio_path = video_path.replace(".mp4", ".mp3")
-                video.audio.write_audiofile(audio_path, verbose=False)
-                os.remove(video_path)
-                video_path = audio_path
+            if format == 'mp3':
+                audio_path = 'audio.mp3'
+                clip = VideoFileClip(video_path)
+                clip.audio.write_audiofile(audio_path, codec='mp3')
+                clip.close()
 
-            await asyncio.sleep(5)
-            user = ctx.author
-            await ctx.send(f'{user.mention}, your video conversion is complete. Here is the converted video:', file=discord.File(video_path))
+                await ctx.send(f'{user.mention}, your video conversion is complete. Here is the converted audio:', file=discord.File(audio_path))
 
-            # Remove the file after 10 minutes
-            await asyncio.sleep(600)
+                os.remove(audio_path)
+            else:
+                await ctx.send(f'{user.mention}, your video conversion is complete. Here is the converted video:', file=discord.File(video_path))
+
             os.remove(video_path)
 
         except Exception as e:
             error_message = str(e)
             await ctx.send(f"An error occurred during video conversion. Please check the URL and try again.\nError details: {error_message}")
 
-def setup(bot: Red):
-    bot.add_cog(YTMP4Cog(bot))
+def setup(bot):
+    bot.add_cog(ConverterCog(bot))
