@@ -31,7 +31,8 @@ class YTMP4Cog(commands.Cog):
 
             await ctx.send("Converting the video to MP4, please wait...")
 
-            video_code = f"{ctx.author.id}-{stream.video_id}"
+            # Generate a unique video code using stream URL
+            video_code = stream.url.split("v=")[-1]
             video_path = f'/mnt/converter/{video_code}.mp4'
             stream.download(output_path="/mnt/converter", filename=video_code)
 
