@@ -2,7 +2,6 @@ import os
 import discord
 from redbot.core import commands
 from pytube import YouTube
-from moviepy.editor import VideoFileClip
 import asyncio
 
 class YTMP3Cog(commands.Cog):
@@ -29,23 +28,17 @@ class YTMP3Cog(commands.Cog):
             # Get the video code from the YouTube URL
             video_code = yt.video_id
 
-            video_path = f'/mnt/converter/{video_code}.mp4'
             audio_path = f'/mnt/converter/{video_code}.mp3'
 
-            video_stream = yt.streams.get_highest_resolution()
-            video_stream.download(output_path="/mnt/converter", filename=video_code)
-
-            clip = VideoFileClip(video_path)
-            clip.audio.write_audiofile(audio_path)
+            stream.download(output_path="/mnt/converter", filename=video_code)
 
             await asyncio.sleep(5)
 
             user = ctx.message.author
             await ctx.send(f'{user.mention}, your video conversion to MP3 is complete. Here is the converted audio:', file=discord.File(audio_path))
 
-            # Remove the files after 10 minutes
+            # Remove the file after 10 minutes
             await asyncio.sleep(600)
-            os.remove(video_path)
             os.remove(audio_path)
 
         except Exception as e:
