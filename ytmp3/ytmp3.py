@@ -2,7 +2,7 @@ import os
 import discord
 from redbot.core import commands
 import asyncio
-import yt_dlp
+import youtube_dl
 
 class YTMP3Cog(commands.Cog):
     def __init__(self, bot):
@@ -13,19 +13,15 @@ class YTMP3Cog(commands.Cog):
         try:
             ydl_opts = {
                 'format': 'bestaudio/best',
-                'postprocessors': [
-                    {
-                        'key': 'FFmpegExtractAudio',
-                        'preferredcodec': 'mp3',
-                        'preferredquality': '192',
-                    }
-                ],
-                'outtmpl': f'/mnt/converter/%(title)s-{ctx.author.id}.%(ext)s',
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': '192',
+                }],
+                'outtmpl': f'/mnt/converter/%(title)s-{ctx.author.id}.mp3',
             }
 
-            ydl = yt_dlp.YoutubeDL(ydl_opts)
-
-            with ydl:
+            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
                 info_dict = ydl.extract_info(url, download=False)
                 video_title = info_dict.get('title', 'video')
 
@@ -35,10 +31,7 @@ class YTMP3Cog(commands.Cog):
 
             await asyncio.sleep(5)
             user = ctx.message.author
-            await ctx.send(
-                f'{user.mention}, your video conversion to MP3 is complete. Here is the converted audio:',
-                file=discord.File(f"/mnt/converter/{video_title}-{ctx.author.id}.mp3"),
-            )
+            await ctx.send(f'{user.mention}, your video conversion to MP3 is complete. Here is the converted audio:', file=discord.File(f"/mnt/converter/{video_title}-{ctx.author.id}.mp3"))
 
             # Remove the file after 10 minutes
             await asyncio.sleep(600)
