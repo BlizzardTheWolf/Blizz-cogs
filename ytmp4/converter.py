@@ -3,7 +3,6 @@ import discord
 from redbot.core import commands
 import asyncio
 from pytube import YouTube
-from moviepy.editor import VideoFileClip
 
 class YTMP4Cog(commands.Cog):
     def __init__(self, bot):
@@ -21,7 +20,7 @@ class YTMP4Cog(commands.Cog):
             stream = yt.streams.filter(progressive=True, file_extension="mp4").order_by('resolution').desc().first()
 
             if not stream:
-                await ctx.send("Could not find a suitable mp4 stream for download.")
+                await ctx.send("Could not find a suitable MP4 stream for download.")
                 return
 
             duration = yt.length
@@ -30,22 +29,20 @@ class YTMP4Cog(commands.Cog):
                 await ctx.send("Video exceeds the maximum time limit of 10 minutes.")
                 return
 
-            await ctx.send(f"Converting the video to mp4, please wait...")
-            video_path = f'{yt.title}-{ctx.author.id}.mp4'
-            stream.download(output_path="/mnt/converter", filename=video_path)
+            await ctx.send("Converting the video to MP4, please wait...")
 
-            # Perform transcoding using moviepy
-            input_path = f"/mnt/converter/{video_path}"
-            output_path = f"/mnt/converter/{yt.title}-{ctx.author.id}-transcoded.mp4"
-            clip = VideoFileClip(input_path)
-            clip.write_videofile(output_path, codec="libx264")
+            video_code = f"{ctx.author.id}-{stream.video_id}"
+            video_path = f'/mnt/converter/{video_code}.mp4'
+            stream.download(output_path="/mnt/converter", filename=video_code)
+
+            await asyncio.sleep(5)
 
             user = ctx.message.author
-            await ctx.send(f'{user.mention}, your video conversion to mp4 is complete. Here is the converted video:', file=discord.File(output_path))
+            await ctx.send(f'{user.mention}, your video conversion to MP4 is complete. Here is the converted video:', file=discord.File(video_path))
 
-            # Remove the files after sending
-            os.remove(input_path)
-            os.remove(output_path)
+            # Remove the file after 10 minutes
+            await asyncio.sleep(600)
+            os.remove(video_path)
 
         except Exception as e:
             error_message = str(e)
