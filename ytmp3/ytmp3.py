@@ -34,7 +34,7 @@ class YTMP3Cog(commands.Cog):
             audio_path = f'/mnt/converter/{title}-{ctx.author.id}.mp3'
 
             video_stream = yt.streams.get_highest_resolution()
-            video_stream.download(output_path="/mnt/converter")
+            video_stream.download(output_path="/mnt/converter", filename=title)
 
             clip = VideoFileClip(video_path)
             clip.audio.write_audiofile(audio_path)
