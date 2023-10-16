@@ -5,6 +5,7 @@ from pytube import YouTube
 from moviepy.editor import VideoFileClip
 import asyncio
 import re
+from unidecode import unidecode
 
 class YTMP3Cog(commands.Cog):
     def __init__(self, bot):
@@ -28,7 +29,11 @@ class YTMP3Cog(commands.Cog):
             await ctx.send("Converting the video to MP3, please wait...")
 
             # Get the video title directly from YouTube
-            title = re.sub(r'[^a-zA-Z0-9]', '_', yt.title)  # Replace special characters with underscores
+            title = yt.title
+
+            # Sanitize the title to remove special characters
+            title = unidecode(title)  # Convert to ASCII characters
+            title = re.sub(r'[\/:*?"<>|]', '_', title)  # Replace illegal filename characters with underscores
             title = re.sub(r'_+', '_', title)  # Replace consecutive underscores with a single underscore
             title = title.strip('_')  # Remove leading/trailing underscores
             title = title[:100]  # Limit the filename length to avoid issues
