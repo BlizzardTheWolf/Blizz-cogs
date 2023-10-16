@@ -1,5 +1,4 @@
-from .afk import AFKCog
+from .ytmp3 import YTMP3Cog
 
 async def setup(bot):
-    cog = AFKCog(bot)
-    await bot.add_cog(cog)
+    await bot.add_cog(YTMP3Cog(bot))
