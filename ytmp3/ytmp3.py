@@ -28,7 +28,7 @@ class YTMP3Cog(commands.Cog):
             # Get the video code from the YouTube URL
             video_code = yt.video_id
 
-            audio_path = f'/mnt/converter/{video_code}.mp3'
+            audio_path = f'/mnt/converter/{video_code}'
 
             stream.download(output_path="/mnt/converter", filename=video_code)
 
