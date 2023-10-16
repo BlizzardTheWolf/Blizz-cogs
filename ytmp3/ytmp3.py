@@ -30,7 +30,13 @@ class YTMP3Cog(commands.Cog):
 
             audio_path = f'/mnt/converter/{video_code}'
 
+            # Download the audio without an extension
             stream.download(output_path="/mnt/converter", filename=video_code)
+
+            # Rename the file with .mp3 extension
+            os.rename(audio_path, f'{audio_path}.mp3')
+
+            audio_path = f'{audio_path}.mp3'
 
             await asyncio.sleep(5)
 
