@@ -19,18 +19,26 @@ class YTMP3Cog(commands.Cog):
                 return
 
             await ctx.send("Downloading the audio, please wait...")
+            
+            # Generate a unique filename based on video title and user ID
             video_title = f"{yt.title}-{ctx.author.id}"
-            stream.download(output_path="/mnt/converter", filename="temp")
-            clip = AudioFileClip(f"/mnt/converter/temp.mp4")
-            clip.write_audiofile(f"/mnt/converter/{video_title}.mp3")
-            os.remove(f"/mnt/converter/temp.mp4")
-
+            
+            # Download the video stream
+            stream.download(output_path="/mnt/converter", filename=f"{video_title}.temp")
+            
+            # Convert the video to audio
+            clip = VideoFileClip(f"/mnt/converter/{video_title}.temp")
+            clip.audio.write_audiofile(f"/mnt/converter/{video_title}.mp3")
+            
+            # Remove the temporary video file
+            os.remove(f"/mnt/converter/{video_title}.temp")
+            
             await asyncio.sleep(5)
             user = ctx.message.author
             await ctx.send(f"{user.mention}, your audio conversion is complete. Here is the converted audio:",
                            file=discord.File(f"/mnt/converter/{video_title}.mp3"))
 
-            # Remove the file after 10 minutes
+            # Remove the audio file after 10 minutes
             await asyncio.sleep(600)
             os.remove(f"/mnt/converter/{video_title}.mp3")
 
