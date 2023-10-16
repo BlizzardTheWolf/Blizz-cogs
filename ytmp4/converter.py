@@ -41,4 +41,4 @@ class ConverterCog(commands.Cog):
             await ctx.send(f"An error occurred during video conversion. Please check the URL and try again.\nError details: {error_message}")
 
 def setup(bot):
-    bot.add_cog(ConverterCog(bot))
+    bot.add_cog(ConverterCog(bot)
