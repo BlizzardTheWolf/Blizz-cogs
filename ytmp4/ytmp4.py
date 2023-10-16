@@ -31,18 +31,18 @@ class YTMP4Cog(commands.Cog):
 
             await ctx.send("Converting the video, please wait...")
 
-            video_path = f'{yt.title}-{ctx.author.id}.{format}'
+            video_path = f'/mnt/converter/{yt.title}-{ctx.author.id}.{format}'  # Updated path
             stream.download(output_path='/mnt/converter/', filename=video_path)
 
-            if os.path.getsize(f'/mnt/converter/{video_path}') > max_file_size_bytes:
+            if os.path.getsize(video_path) > max_file_size_bytes:
                 await ctx.send("The file is too big to be converted. It must be under 25MBs. This is Discord's fault, not mine.")
-                os.remove(f'/mnt/converter/{video_path}')
+                os.remove(video_path)
                 return
 
             await asyncio.sleep(5)
 
             user = ctx.message.author
-            await ctx.send(f'{user.mention}, your video conversion is complete. Here is the converted video:', file=discord.File(f'/mnt/converter/{video_path}'))
+            await ctx.send(f'{user.mention}, your video conversion is complete. Here is the converted video:', file=discord.File(video_path))
         except Exception as e:
             error_message = str(e)
             await ctx.send(f"An error occurred during video conversion. Please check the URL and try again.\nError details: {error_message}")
