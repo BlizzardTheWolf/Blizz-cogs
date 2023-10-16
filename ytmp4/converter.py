@@ -30,12 +30,12 @@ class ConverterCog(commands.Cog):
 
             await ctx.trigger_typing()  # Show "typing" status while converting
 
-            video_path = f'{yt.title}-{ctx.author.id}.{format}'
+            video_path = f'/mnt/converter/{yt.title}-{ctx.author.id}.{format}'
             stream.download(output_path='/mnt/converter', filename=video_path)
 
             await asyncio.sleep(5)
-            user = ctx.message.author
-            await ctx.send(f'{user.mention}, your video conversion is complete. Here is the converted video:', file=discord.File(f'/mnt/converter/{video_path}'))
+            user = ctx.author
+            await ctx.send(f'{user.mention}, your video conversion is complete. Here is the converted video:', file=discord.File(video_path))
         except Exception as e:
             error_message = str(e)
             await ctx.send(f"An error occurred during video conversion. Please check the URL and try again.\nError details: {error_message}")
