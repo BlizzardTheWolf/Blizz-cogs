@@ -3,6 +3,7 @@ import discord
 from redbot.core import commands
 from pytube import YouTube
 import asyncio
+import time
 
 class YTMP4Cog(commands.Cog):
     def __init__(self, bot):
@@ -31,8 +32,8 @@ class YTMP4Cog(commands.Cog):
 
             await ctx.send("Converting the video to mp4, please wait...")
 
-            # Generate a unique filename
-            video_code = stream.video_id + ".mp4"
+            # Generate a unique filename with timestamp
+            video_code = str(int(time.time())) + ".mp4"
             video_path = os.path.join("/mnt/converter", video_code)
 
             stream.download(output_path="/mnt/converter", filename=video_code)
