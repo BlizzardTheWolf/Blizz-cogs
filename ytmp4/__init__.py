@@ -1,5 +1,4 @@
-from .ytmp4 import YTMP4Cog
+from .converter import ConverterCog
 
 async def setup(bot):
-    cog = YTMP4Cog(bot)
-    await bot.add_cog(cog)
+    await bot.add_cog(ConverterCog(bot))
