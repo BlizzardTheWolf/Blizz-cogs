@@ -29,6 +29,7 @@ class YTMP3Cog(commands.Cog):
 
             # Sanitize the video title
             title = re.sub(r'[\/:*?"<>|]', '', yt.title)
+            title = title.replace(" ", "_")  # Replace spaces with underscores
             video_path = f'/mnt/converter/{title}-{ctx.author.id}.mp4'
             audio_path = f'/mnt/converter/{title}-{ctx.author.id}.mp3'
 
