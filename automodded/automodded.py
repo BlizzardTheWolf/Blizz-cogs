@@ -1,28 +1,39 @@
 import discord
-from redbot.core import commands, Config
+from redbot.core import Config, checks, commands
 
-class AutoModCog(commands.Cog):
+class AFK(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=7320912352)
-        self.config.register_global(message="This is your default automodded message.")
+        self.config = Config.get_conf(self, identifier=123456789)
+        default_global = {}
+        self.config.register_global(**default_global)
 
-    @commands.command()
-    async def setautomodded(self, ctx, *, message_content):
-        """Set the message to send with the automodded command."""
-        await self.config.message.set(message_content)
-        await ctx.send("Automodded message has been updated.")
+    @commands.Cog.listener()
+    async def on_message_without_command(self, message):
+        blocked_guilds = await self.config.ign_servers()
+        # Rest of your code
 
-    @commands.command()
-    async def automodded(self, ctx):
-        """Send a direct message with the automodded message to the user who invoked this command."""
-        user = ctx.message.author
-        message_content = await self.config.message()
-        try:
-            await user.send(message_content)
-            await ctx.send("Automodded message has been sent to you via DM.")
-        except discord.Forbidden:
-            await ctx.send("I couldn't send you a message. Make sure your DMs are enabled.")
+    @checks.is_owner()
+    @commands.group()
+    async def setautomodded(self, ctx):
+        if not ctx.invoked_subcommand:
+            pass
+
+    @setautomodded.command(name="block")
+    async def block(self, ctx, guild: discord.Guild):
+        async with self.config.ign_servers() as blocked_guilds:
+            if guild.id not in blocked_guilds:
+                blocked_guilds.append(guild.id)
+
+    @setautomodded.command(name="unblock")
+    async def unblock(self, ctx, guild: discord.Guild):
+        async with self.config.ign_servers() as blocked_guilds:
+            if guild.id in blocked_guilds:
+                blocked_guilds.remove(guild.id)
+
+    async def _setup(self):
+        if not hasattr(self.bot, "config"):
+            raise RuntimeError("You need to run this on V3")
 
 def setup(bot):
-    bot.add_cog(AutoModCog(bot))
+    bot.add_cog(AFK(bot))
