@@ -12,6 +12,13 @@ class BlockedWords(commands.Cog):
         user = ctx.author
         message = await self.config.message()
 
+        if not message:
+            await ctx.send("Blocked words message is not set. Please configure it.")
+            return
+
+        try:
+            await user.send(message)
+
     @commands.group()
     async def blockedwordsset(self, ctx):
         pass
