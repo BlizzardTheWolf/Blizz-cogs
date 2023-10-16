@@ -4,6 +4,7 @@ from redbot.core import commands
 from pytube import YouTube
 from moviepy.editor import VideoFileClip
 import asyncio
+import re
 
 class YTMP3Cog(commands.Cog):
     def __init__(self, bot):
@@ -26,8 +27,10 @@ class YTMP3Cog(commands.Cog):
 
             await ctx.send("Converting the video to MP3, please wait...")
 
-            video_path = f'/mnt/converter/{yt.title}-{ctx.author.id}.mp4'
-            audio_path = f'/mnt/converter/{yt.title}-{ctx.author.id}.mp3'
+            # Sanitize the video title
+            title = re.sub(r'[\/:*?"<>|]', '', yt.title)
+            video_path = f'/mnt/converter/{title}-{ctx.author.id}.mp4'
+            audio_path = f'/mnt/converter/{title}-{ctx.author.id}.mp3'
 
             video_stream = yt.streams.get_highest_resolution()
             video_stream.download(output_path="/mnt/converter")
