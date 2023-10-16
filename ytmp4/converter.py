@@ -1,22 +1,13 @@
-import os
 import discord
-from redbot.core import commands
+from discord.ext import commands
 from pytube import YouTube
 import asyncio
-from datetime import timezone
 
-class YTMP4Cog(commands.Cog):
+class ConverterCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        if not os.path.exists('/mnt/converter'):
-            os.makedirs('/mnt/converter')
-
-    @commands.Cog.listener()
-    async def on_ready(self):
-        print(f'Logged in as {self.bot.user.name}')
-
-    @commands.command()
+    @commands.command(name='convert')
     async def convert(self, ctx, url, format='mp4'):
         try:
             yt = YouTube(url)
@@ -39,27 +30,12 @@ class YTMP4Cog(commands.Cog):
 
             await ctx.trigger_typing()  # Show "typing" status while converting
 
-            video_path = f'/mnt/converter/{yt.title}-{ctx.author.id}.{format}'
-            stream.download(output_path='/mnt/converter', filename=yt.title)
-            file_size = os.path.getsize(video_path)
+            video_path = f'{yt.title}-{ctx.author.id}.{format}'
+            stream.download(output_path='/mnt/converter', filename=video_path)
 
-            if file_size > 25 * 1024 * 1024:  # 25MB
-                os.remove(video_path)
-                await ctx.send("The file is too big to be converted. It must be under 25MBs. This is Discord's fault, not mine.")
-                return
-
-            if format == 'mp3':
-                os.system(f'ffmpeg -i "{video_path}" -vn -ab 192k -ar 44100 -y "{video_path[:-4]}.mp3"')
-                os.remove(video_path)
-                video_path = f'/mnt/converter/{yt.title}-{ctx.author.id}.mp3'
-
-            user = ctx.author
-            await ctx.send(f'{user.mention}, your video conversion is complete. Here is the converted file:', file=discord.File(video_path))
+            await asyncio.sleep(5)
+            user = ctx.message.author
+            await ctx.send(f'{user.mention}, your video conversion is complete. Here is the converted video:', file=discord.File(f'/mnt/converter/{video_path}'))
         except Exception as e:
             error_message = str(e)
             await ctx.send(f"An error occurred during video conversion. Please check the URL and try again.\nError details: {error_message}")
-
-    # ... (other bot commands, if any)
-
-def setup(bot):
-    bot.add_cog(YTMP4Cog(bot))
