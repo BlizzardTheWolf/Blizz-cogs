@@ -12,16 +12,6 @@ class BlockedWords(commands.Cog):
         user = ctx.author
         message = await self.config.message()
 
-        if not message:
-            await ctx.send("Blocked words message is not set. Please configure it.")
-            return
-
-        try:
-            await user.send(message)
-            await ctx.send("You've received a DM with the blocked words message.")
-        except discord.Forbidden:
-            await ctx.send("I couldn't send you a DM. Please check your privacy settings.")
-
     @commands.group()
     async def blockedwordsset(self, ctx):
         pass
