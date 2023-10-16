@@ -1,38 +1,28 @@
-import os
 import discord
-from redbot.core import commands
-import asyncio
+from redbot.core import commands, Config
 
-class YTMP3Cog(commands.Cog):
+class AutoModCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.config = Config.get_conf(self, identifier=7320912352)
+        self.config.register_global(message="This is your default automodded message.")
 
     @commands.command()
-    async def ytmp3(self, ctx, url):
+    async def setautomodded(self, ctx, *, message_content):
+        """Set the message to send with the automodded command."""
+        await self.config.message.set(message_content)
+        await ctx.send("Automodded message has been updated.")
+
+    @commands.command()
+    async def automodded(self, ctx):
+        """Send a direct message with the automodded message to the user who invoked this command."""
+        user = ctx.message.author
+        message_content = await self.config.message()
         try:
-            mp3_filename = await self.download_mp3(url)
-
-            user = ctx.message.author
-            await ctx.send(f'{user.mention}, your video conversion to MP3 is complete. Here is the MP3 audio:', file=discord.File(mp3_filename))
-
-            # Remove the file after 10 minutes
-            await asyncio.sleep(600)
-            os.remove(mp3_filename)
-
-        except Exception as e:
-            error_message = str(e)
-            await ctx.send(f"An error occurred during audio conversion. Please check the URL and try again.\nError details: {error_message}")
-
-    async def download_mp3(self, url):
-        mp3_filename = "/mnt/converter/audio.mp3"  # Adjust the filename and path as needed
-        command = f"yt-dl --extract-audio --audio-format mp3 -o '{mp3_filename}' '{url}'"
-
-        try:
-            # Run the yt-dl command to download and convert the video to MP3
-            os.system(command)
-            return mp3_filename
-        except Exception as e:
-            raise e
+            await user.send(message_content)
+            await ctx.send("Automodded message has been sent to you via DM.")
+        except discord.Forbidden:
+            await ctx.send("I couldn't send you a message. Make sure your DMs are enabled.")
 
 def setup(bot):
-    bot.add_cog(YTMP3Cog(bot))
+    bot.add_cog(AutoModCog(bot))
