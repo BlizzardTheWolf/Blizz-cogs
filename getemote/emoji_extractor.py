@@ -1,19 +1,38 @@
 import discord
-from discord.ext import commands
+from redbot.core import commands
+from redbot.core.bot import Red
 
-class EmojiExtractorCog(commands.Cog):
-    def __init__(self, bot):
+class GetEmoteCog(commands.Cog):
+    def __init__(self, bot: Red):
         self.bot = bot
 
-    @commands.command()
-    async def getemote(self, ctx):
-        custom_emojis = [str(emoji) for emoji in ctx.message.content.split() if emoji.startswith(":") and emoji.endswith(":")]
-        if custom_emojis:
-            response = "Found custom emojis in the message. Use ;getemote to see them."
-            await ctx.send(response)
-        else:
-            response = "No custom emojis found in the message."
-            await ctx.send(response)
+    @commands.Cog.listener()
+    async def on_message(self, message: discord.Message):
+        if message.author == self.bot.user:
+            return
 
-def setup(bot):
-    bot.add_cog(EmojiExtractorCog(bot))
+        # Check if the message has custom emojis
+        custom_emotes = [
+            emote.strip(":") for emote in message.content.split() if emote.startswith(":") and emote.endswith(":")
+        ]
+
+        if custom_emotes:
+            # Store custom emojis in a dictionary with their respective URLs
+            emote_info = {emote: f"https://cdn.discordapp.com/emojis/{emote.id}.png" for emote in custom_emotes}
+
+            # Attach emote information to the message
+            message.custom_emotes = emote_info
+
+        await super().on_message(message)
+
+    @commands.command()
+    async def getemote(self, ctx: commands.Context):
+        if hasattr(ctx.message, "custom_emotes"):
+            emote_info = ctx.message.custom_emotes
+            embed = discord.Embed(title="Custom Emote Links")
+            for emote_name, emote_url in emote_info.items():
+                embed.add_field(name=emote_name, value=emote_url, inline=False)
+            await ctx.send(embed=embed)
+
+def setup(bot: Red):
+    bot.add_cog(GetEmoteCog(bot))
