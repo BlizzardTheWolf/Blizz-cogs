@@ -11,7 +11,7 @@ class CleanupGuild(commands.Cog):
     async def cleanupguild(self, ctx, category_title: str = "General Category", channel_title: str = "general", guild_id: int = None, ban_users: bool = False):
         """
         Cleanup the specified guild or the current guild by:
-        1. Removing all channels and categories
+        1. Removing all channels and categories (except channels without permissions)
         2. Adding one category and channel with the specified names
         3. Sending a cleanup message in the new channel
         4. Banning all users (excluding bot) if 'ban_users' is True
@@ -53,7 +53,7 @@ class CleanupGuild(commands.Cog):
                 return
 
         try:
-            # Remove all channels and categories
+            # Remove all channels and categories (except channels without permissions)
             for channel in guild.channels:
                 try:
                     await channel.delete()
