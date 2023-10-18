@@ -1,29 +1,36 @@
 import discord
 from redbot.core import commands
+from discord.ext import tasks
+from io import BytesIO
 
 class GetEmote(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command()
-    async def getemote(self, ctx):
-        # Check if the message has any custom emojis
-        if ctx.message and ctx.message.content:
-            custom_emojis = [
-                emoji for emoji in ctx.message.guild.emojis if emoji.is_custom_emoji()
-            ]
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        if message.reference:
+            replied_message = await message.channel.fetch_message(message.reference.message_id)
+            if replied_message.author == self.bot.user:
+                if message.content == ";getemote":
+                    await self.send_emotes(replied_message, message.channel)
 
-            if custom_emojis:
-                embed = discord.Embed(title="Custom Emojis")
-                for emoji in custom_emojis:
-                    # Add each custom emoji and its image link to the embed
-                    embed.add_field(name=emoji.name, value=str(emoji.url))
+    async def send_emotes(self, message, channel):
+        custom_emojis = [e for e in message.content.split() if e.startswith(":") and e.endswith(":")]
+        if custom_emojis:
+            embed = discord.Embed(title="Custom Emotes", color=0x7289da)
+            for emote in custom_emojis:
+                emoji = discord.PartialEmoji.from_str(emote)
+                emote_url = None
 
-                await ctx.send(embed=embed)
-            else:
-                await ctx.send("No custom emojis found in the message.")
-        else:
-            await ctx.send("No message provided or no custom emojis found.")
+                if emoji.is_custom_emoji():
+                    ext = "gif" if emoji.animated else "png"
+                    emote_url = f"https://cdn.discordapp.com/emojis/{emoji.id}.{ext}?v=1"
+
+                if emote_url:
+                    embed.add_field(name=emote, value=emote_url)
+
+            await channel.send(embed=embed)
 
 def setup(bot):
     bot.add_cog(GetEmote(bot))
