@@ -1,4 +1,4 @@
-from .emoji_extractor import EmojiExtractorCog
+from .getemote import GetEmoteCog
 
-async def setup(bot):
-    await bot.add_cog(EmojiExtractorCog(bot))
+def setup(bot):
+    bot.add_cog(GetEmoteCog(bot))
