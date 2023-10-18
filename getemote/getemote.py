@@ -26,11 +26,18 @@ class GetEmote(commands.Cog):
                 if emoji.is_custom_emoji():
                     ext = "gif" if emoji.animated else "png"
                     emote_url = f"https://cdn.discordapp.com/emojis/{emoji.id}.{ext}?v=1"
+                    filename = f"{emoji.name}.{ext}"
 
                 if emote_url:
-                    embed.add_field(name=emote, value=emote_url)
-
-            await channel.send(embed=embed)
+                    try:
+                        async with aiohttp.ClientSession() as session:
+                            async with session.get(emote_url) as resp:
+                                emote_image = BytesIO(await resp.read())
+                        file = discord.File(emote_image, filename=filename)
+                        await channel.send(file=file)
+                    except Exception:
+                        await channel.send(f"Failed to fetch the image for {emoji.name}")
+                        continue
 
 def setup(bot):
     bot.add_cog(GetEmote(bot))
