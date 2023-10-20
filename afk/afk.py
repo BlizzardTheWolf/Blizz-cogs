@@ -1,12 +1,12 @@
 import discord
 from redbot.core import commands
 from redbot.core.utils.chat_formatting import humanize_list
+from redbot.core import checks
 
 class AFK(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.afk_statuses = {}  # Dictionary to store AFK statuses
-        self.mod_roles = ["Moderator", "Admin"]  # Replace with your mod roles
 
     @commands.command()
     async def afk(self, ctx, *, reason: str = "AFK"):
@@ -34,7 +34,7 @@ class AFK(commands.Cog):
                 await message.channel.send(f"{afk_list} {'is' if len(afk_mentions) == 1 else 'are'} AFK.")
 
     @commands.command()
-    @commands.has_any_role(*mod_roles)
+    @checks.mod_or_permissions(manage_messages=True)  # Modify the permissions as needed
     async def clearafk(self, ctx, member: discord.Member):
         """Clear the AFK status of a member."""
         if member.id in self.afk_statuses:
@@ -43,7 +43,7 @@ class AFK(commands.Cog):
             await ctx.send(f"AFK status cleared for {member.mention}.")
 
     @commands.command()
-    @commands.has_any_role(*mod_roles)
+    @checks.mod_or_permissions(manage_messages=True)  # Modify the permissions as needed
     async def listafk(self, ctx):
         """List all members with AFK status."""
         afk_members = [ctx.guild.get_member(member_id) for member_id in self.afk_statuses.keys()]
