@@ -1,6 +1,5 @@
 import discord
 from redbot.core import commands
-import asyncio
 
 class AFK(commands.Cog):
     def __init__(self, bot):
@@ -10,10 +9,8 @@ class AFK(commands.Cog):
     @commands.Cog.listener()
     async def on_message(self, message):
         if message.author.id in self.afk_users:
-            await asyncio.sleep(5)
-            if message.author.id in self.afk_users:  # Check if the user is still AFK
-                await self.clear_afk(message.author)
-                await message.channel.send(f"{message.author.mention} is no longer AFK.")
+            await self.clear_afk(message.author)
+            await message.channel.send(f"{message.author.mention} is no longer AFK.")
 
     async def clear_afk(self, user):
         if user.id in self.afk_users:
