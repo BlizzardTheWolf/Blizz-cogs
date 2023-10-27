@@ -2,6 +2,7 @@ import os
 import discord
 from redbot.core import commands
 from pytube import YouTube
+import aiohttp
 import asyncio
 import time
 
@@ -31,11 +32,12 @@ class ConverterCog(commands.Cog):
 
             audio_path = f'/mnt/converter/{video_code}'
 
-            # Download the audio without an extension
-            stream.download(output_path="/mnt/converter", filename=video_code)
+            async with aiohttp.ClientSession() as session:
+                async with session.get(stream.url) as response:
+                    audio_data = await response.read()
 
-            # Rename the file with .mp3 extension
-            os.rename(audio_path, f'{audio_path}.mp3')
+            with open(f'{audio_path}.mp3', 'wb') as audio_file:
+                audio_file.write(audio_data)
 
             audio_path = f'{audio_path}.mp3'
 
@@ -79,7 +81,12 @@ class ConverterCog(commands.Cog):
             video_code = str(int(time.time())) + ".mp4"
             video_path = os.path.join("/mnt/converter", video_code)
 
-            stream.download(output_path="/mnt/converter", filename=video_code)
+            async with aiohttp.ClientSession() as session:
+                async with session.get(stream.url) as response:
+                    video_data = await response.read()
+
+            with open(video_path, 'wb') as video_file:
+                video_file.write(video_data)
 
             await asyncio.sleep(5)
 
