@@ -4,8 +4,7 @@ import asyncio
 import time
 import os
 from redbot.core import data_manager
-
-from moviepy.editor import *
+from pytube import YouTube
 
 class ConverterCog(commands.Cog):
     def __init__(self, bot):
@@ -15,25 +14,32 @@ class ConverterCog(commands.Cog):
     @commands.command()
     async def ytmp3(self, ctx, url):
         try:
-            video = VideoFileClip(url)
-            
-            if video is None:
-                await ctx.send("Could not find the video for conversion.")
+            yt = YouTube(url)
+
+            if yt.age_restricted:
+                await ctx.send("This video is age-restricted and cannot be converted.")
+                return
+
+            stream = yt.streams.filter(only_audio=True).first()
+
+            if not stream:
+                await ctx.send("Could not find an audio stream for download.")
                 return
 
             await ctx.send("Converting the video to MP3, please wait...")
 
             # Get the video code from the YouTube URL
-            video_code = str(int(time.time())) + ".mp3"
-            audio_path = self.data_folder / video_code
+            video_code = yt.video_id
+            audio_path = self.data_folder / f"{video_code}.mp3"
 
-            audio = video.audio
-            audio.write_audiofile(str(audio_path))
+            stream.download(output_path=str(self.data_folder), filename=video_code)
+
+            audio_path = self.data_folder / f"{video_code}.mp3"
 
             await asyncio.sleep(5)
 
             user = ctx.message.author
-            await ctx.send(f'{user.mention}, your video conversion to MP3 is complete. Here is the converted audio:', file=discord.File(str(audio_path)))
+            await ctx.send(f'{user.mention}, your video conversion to MP3 is complete. Here is the converted audio:', file=discord.File(str(audio_path))
 
             # Remove the file after 10 minutes
             await asyncio.sleep(600)
@@ -46,24 +52,36 @@ class ConverterCog(commands.Cog):
     @commands.command()
     async def ytmp4(self, ctx, url):
         try:
-            video = VideoFileClip(url)
-            
-            if video is None:
-                await ctx.send("Could not find the video for conversion.")
+            yt = YouTube(url)
+
+            if yt.age_restricted:
+                await ctx.send("This video is age-restricted and cannot be converted.")
+                return
+
+            stream = yt.streams.filter(progressive=True, file_extension="mp4").order_by('resolution').desc().first()
+
+            if not stream:
+                await ctx.send("Could not find a suitable mp4 stream for download.")
+                return
+
+            duration = yt.length
+
+            if duration > 600:
+                await ctx.send("Video exceeds the maximum time limit of 10 minutes.")
                 return
 
             await ctx.send("Converting the video to mp4, please wait...")
 
             # Generate a unique filename with timestamp
-            video_code = str(int(time.time())) + ".mp4"
-            video_path = self.data_folder / video_code
+            video_code = str(int(time.time()))
+            video_path = self.data_folder / f"{video_code}.mp4"
 
-            video.write_videofile(str(video_path))
+            stream.download(output_path=str(self.data_folder), filename=video_code)
 
             await asyncio.sleep(5)
 
             user = ctx.message.author
-            await ctx.send(f'{user.mention}, your video conversion to mp4 is complete. Here is the converted video:', file=discord.File(str(video_path)))
+            await ctx.send(f'{user.mention}, your video conversion to mp4 is complete. Here is the converted video:', file=discord.File(str(video_path))
 
             # Remove the file after 10 minutes
             await asyncio.sleep(600)
