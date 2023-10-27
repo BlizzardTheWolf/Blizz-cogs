@@ -59,7 +59,7 @@ class ConverterCog(commands.Cog):
 
             await asyncio.sleep(5)
 
-            user = ctx.message author
+            user = ctx.message.author
             await ctx.send(f'{user.mention}, your video conversion to {output_ext} is complete. Here is the converted file:',
                            file=discord.File(str(video_path))
 
@@ -89,5 +89,4 @@ class ConverterCog(commands.Cog):
             ctx (commands.Context): The context.
             url (str): The YouTube video URL.
         """
-        await self download_and_convert(ctx, url, to_mp3=False)
-.add_cog(ConverterCog(bot))
+        await self.download_and_convert(ctx, url, to_mp3=False)
