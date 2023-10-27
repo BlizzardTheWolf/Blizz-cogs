@@ -9,10 +9,27 @@ import shutil
 
 class ConverterCog(commands.Cog):
     def __init__(self, bot):
+        """
+        Initialize the ConverterCog.
+
+        Args:
+            bot (commands.Bot): The Red-DiscordBot instance.
+        """
         self.bot = bot
         self.data_folder = data_manager.cog_data_path(cog_instance=self)
 
     async def download_and_convert(self, ctx, url, to_mp3=False):
+        """
+        Download and convert a YouTube video.
+
+        Args:
+            ctx (commands.Context): The invocation context.
+            url (str): The URL of the YouTube video to convert.
+            to_mp3 (bool): Set to True to convert to MP3, False to MP4.
+
+        Returns:
+            None
+        """
         try:
             yt = YouTube(url)
 
@@ -51,8 +68,7 @@ class ConverterCog(commands.Cog):
 
             user = ctx.message.author
             await ctx.send(f'{user.mention}, your video conversion to {output_ext} is complete. Here is the converted file:',
-               file=discord.File(str(video_path)))
-
+                           file=discord.File(str(video_path))
 
             # Remove the file after 10 minutes
             await asyncio.sleep(600)
@@ -64,13 +80,28 @@ class ConverterCog(commands.Cog):
 
     @commands.command()
     async def ytmp3(self, ctx, url):
+        """
+        Convert a YouTube video to MP3 format and send it as a file.
+
+        Args:
+            ctx (commands.Context): The invocation context.
+            url (str): The URL of the YouTube video to convert.
+
+        Returns:
+            None
+        """
         await self.download_and_convert(ctx, url, to_mp3=True)
 
     @commands.command()
     async def ytmp4(self, ctx, url):
+        """
+        Convert a YouTube video to MP4 format and send it as a file.
+
+        Args:
+            ctx (commands.Context): The invocation context.
+            url (str): The URL of the YouTube video to convert.
+
+        Returns:
+            None
+        """
         await self.download_and_convert(ctx, url, to_mp3=False)
-
-    # Rest of your code here...
-
-def setup(bot):
-    bot.add_cog(ConverterCog(bot))
