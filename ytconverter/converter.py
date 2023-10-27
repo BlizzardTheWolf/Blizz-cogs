@@ -69,8 +69,8 @@ class ConverterCog(commands.Cog):
 
             duration = yt.length
 
-            if duration > 900:
-                await ctx.send("Video exceeds the maximum time limit of 15 minutes.")
+            if duration > 600:
+                await ctx.send("Video exceeds the maximum time limit of 10 minutes.")
                 return
 
             await ctx.send("Converting the video to mp4, please wait...")
@@ -88,10 +88,13 @@ class ConverterCog(commands.Cog):
             await ctx.send(f'{user.mention}, your video conversion to mp4 is complete. Here is the converted video:',
                            file=discord.File(str(video_path))
 
-            # Remove the file after 1 minute
-            await asyncio.sleep(60)
+            # Remove the file after 10 minutes
+            await asyncio.sleep(600)
             os.remove(str(video_path))
 
         except Exception as e:
             error_message = str(e)
             await ctx.send(f"An error occurred during video conversion. Please check the URL and try again.\nError details: {error_message}")
+
+def setup(bot):
+    bot.add_cog(ConverterCog(bot))
