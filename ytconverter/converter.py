@@ -9,6 +9,9 @@ class ConverterCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
+    async def cog_data_path(self):
+        return self.bot.cog_data_path(self)
+
     @commands.command()
     async def ytmp3(self, ctx, url):
         try:
