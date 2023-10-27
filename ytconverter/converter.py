@@ -1,49 +1,43 @@
 import discord
 from redbot.core import commands
-from pytube import YouTube
 import asyncio
 import time
 import os
-from redbot.core import data_manager  # Import data_manager
+from redbot.core import data_manager
+
+from moviepy.editor import *
 
 class ConverterCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.data_folder = data_manager.cog_data_path(self)  # Get the cog-specific data path
+        self.data_folder = data_manager.cog_data_path(self)
 
     @commands.command()
     async def ytmp3(self, ctx, url):
         try:
-            yt = YouTube(url)
-
-            if yt.age_restricted:
-                await ctx.send("This video is age-restricted and cannot be converted.")
-                return
-
-            stream = yt.streams.filter(only_audio=True).first()
-
-            if not stream:
-                await ctx.send("Could not find an audio stream for download.")
+            video = VideoFileClip(url)
+            
+            if video is None:
+                await ctx.send("Could not find the video for conversion.")
                 return
 
             await ctx.send("Converting the video to MP3, please wait...")
 
             # Get the video code from the YouTube URL
-            video_code = yt.video_id
+            video_code = str(int(time.time())) + ".mp3"
+            audio_path = self.data_folder / video_code
 
-            audio_path = self.data_folder / f"{video_code}.mp3"  # Use the cog data path
-
-            # Download the audio without an extension
-            stream.download(output_path=str(self.data_folder), filename=video_code)  # Use the cog data path
+            audio = video.audio
+            audio.write_audiofile(str(audio_path))
 
             await asyncio.sleep(5)
 
             user = ctx.message.author
-            await ctx.send(f'{user.mention}, your video conversion to MP3 is complete. Here is the converted audio:', file=discord.File(str(audio_path))  # Add the missing closing parenthesis
+            await ctx.send(f'{user.mention}, your video conversion to MP3 is complete. Here is the converted audio:', file=discord.File(str(audio_path))
 
             # Remove the file after 10 minutes
             await asyncio.sleep(600)
-            os.remove(str(audio_path))  # Convert audio_path to a string
+            os.remove(str(audio_path))
 
         except Exception as e:
             error_message = str(e)
@@ -52,40 +46,28 @@ class ConverterCog(commands.Cog):
     @commands.command()
     async def ytmp4(self, ctx, url):
         try:
-            yt = YouTube(url)
-
-            if yt.age_restricted:
-                await ctx.send("This video is age-restricted and cannot be converted.")
-                return
-
-            stream = yt.streams.filter(progressive=True, file_extension="mp4").order_by('resolution').desc().first()
-
-            if not stream:
-                await ctx.send("Could not find a suitable mp4 stream for download.")
-                return
-
-            duration = yt.length
-
-            if duration > 600:
-                await ctx.send("Video exceeds the maximum time limit of 10 minutes.")
+            video = VideoFileClip(url)
+            
+            if video is None:
+                await ctx.send("Could not find the video for conversion.")
                 return
 
             await ctx.send("Converting the video to mp4, please wait...")
 
             # Generate a unique filename with timestamp
             video_code = str(int(time.time())) + ".mp4"
-            video_path = self.data_folder / video_code  # Use the cog data path
+            video_path = self.data_folder / video_code
 
-            stream.download(output_path=str(self.data_folder), filename=video_code)  # Use the cog data path
+            video.write_videofile(str(video_path))
 
             await asyncio.sleep(5)
 
             user = ctx.message.author
-            await ctx.send(f'{user.mention}, your video conversion to mp4 is complete. Here is the converted video:', file=discord.File(str(video_path))  # Add the missing closing parenthesis
+            await ctx.send(f'{user.mention}, your video conversion to mp4 is complete. Here is the converted video:', file=discord.File(str(video_path))
 
             # Remove the file after 10 minutes
             await asyncio.sleep(600)
-            os.remove(str(video_path))  # Convert video_path to a string
+            os.remove(str(video_path))
 
         except Exception as e:
             error_message = str(e)
