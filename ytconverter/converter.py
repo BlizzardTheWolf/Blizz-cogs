@@ -62,7 +62,7 @@ class ConverterCog(commands.Cog):
 
             user = ctx.message.author
             await ctx.send(f'{user.mention}, your video conversion to {output_ext} is complete. Here is the converted file:',
-                file=discord.File(str(video_path))
+                           file=discord.File(str(video_path))
 
             # Remove the file after 10 minutes
             await asyncio.sleep(600)
