@@ -70,7 +70,3 @@ class ConverterCog(commands.Cog):
     async def ytmp4(self, ctx, url):
         await self.download_and_convert(ctx, url, to_mp3=False)
 
-    # Rest of your code here...
-
-def setup(bot):
-    bot.add_cog(ConverterCog(bot))
