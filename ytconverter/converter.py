@@ -1,13 +1,15 @@
-import os
 import discord
 from redbot.core import commands
 from pytube import YouTube
 import asyncio
 import time
+import os
+from redbot.core import data_manager  # Import data_manager
 
 class ConverterCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.data_folder = data_manager.cog_data_path(self)  # Get the cog-specific data path
 
     @commands.command()
     async def ytmp3(self, ctx, url):
@@ -29,25 +31,19 @@ class ConverterCog(commands.Cog):
             # Get the video code from the YouTube URL
             video_code = yt.video_id
 
-            audio_path = f'{video_code}.mp3'
-            data_path = self.bot.user_data_path() / 'converter'
+            audio_path = self.data_folder / f"{video_code}.mp3"  # Use the cog data path
 
             # Download the audio without an extension
-            stream.download(output_path=data_path, filename=video_code)
-
-            # Rename the file with .mp3 extension
-            os.rename(data_path / audio_path, data_path / f'{audio_path}.mp3')
-
-            audio_path = str(data_path / f'{audio_path}.mp3')
+            stream.download(output_path=str(self.data_folder), filename=video_code)  # Use the cog data path
 
             await asyncio.sleep(5)
 
-            user = ctx.author
+            user = ctx.message.author
             await ctx.send(f'{user.mention}, your video conversion to MP3 is complete. Here is the converted audio:', file=discord.File(audio_path))
 
             # Remove the file after 10 minutes
             await asyncio.sleep(600)
-            os.remove(data_path / f'{audio_path}')
+            os.remove(str(audio_path))  # Convert audio_path to a string
 
         except Exception as e:
             error_message = str(e)
@@ -78,18 +74,18 @@ class ConverterCog(commands.Cog):
 
             # Generate a unique filename with timestamp
             video_code = str(int(time.time())) + ".mp4"
-            video_path = str(self.bot.user_data_path() / 'converter' / video_code)
+            video_path = self.data_folder / video_code  # Use the cog data path
 
-            stream.download(output_path=self.bot.user_data_path() / 'converter', filename=video_code)
+            stream.download(output_path=str(self.data_folder), filename=video_code)  # Use the cog data path
 
             await asyncio.sleep(5)
 
-            user = ctx.author
+            user = ctx.message.author
             await ctx.send(f'{user.mention}, your video conversion to mp4 is complete. Here is the converted video:', file=discord.File(video_path))
 
             # Remove the file after 10 minutes
             await asyncio.sleep(600)
-            os.remove(video_path)
+            os.remove(str(video_path))  # Convert video_path to a string
 
         except Exception as e:
             error_message = str(e)
