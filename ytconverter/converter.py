@@ -8,21 +8,11 @@ from redbot.core import data_manager
 import shutil
 
 class ConverterCog(commands.Cog):
-    """A Red-DiscordBot cog for converting YouTube videos to MP3 or MP4."""
-
     def __init__(self, bot):
-        """Initialize the ConverterCog."""
         self.bot = bot
         self.data_folder = data_manager.cog_data_path(cog_instance=self)
 
     async def download_and_convert(self, ctx, url, to_mp3=False):
-        """Download and convert a YouTube video.
-
-        Args:
-            ctx (commands.Context): The context.
-            url (str): The YouTube video URL.
-            to_mp3 (bool, optional): Whether to convert to MP3. Defaults to False.
-        """
         try:
             yt = YouTube(url)
 
@@ -61,7 +51,8 @@ class ConverterCog(commands.Cog):
 
             user = ctx.message.author
             await ctx.send(f'{user.mention}, your video conversion to {output_ext} is complete. Here is the converted file:',
-                           file=discord.File(str(video_path)))
+               file=discord.File(str(video_path)))
+
 
             # Remove the file after 10 minutes
             await asyncio.sleep(600)
@@ -73,22 +64,8 @@ class ConverterCog(commands.Cog):
 
     @commands.command()
     async def ytmp3(self, ctx, url):
-        """Convert a YouTube video to MP3.
-
-        Args:
-            ctx (commands.Context): The context.
-            url (str): The YouTube video URL.
-        """
         await self.download_and_convert(ctx, url, to_mp3=True)
 
     @commands.command()
     async def ytmp4(self, ctx, url):
-        """Convert a YouTube video to MP4.
-
-        Args:
-            ctx (commands.Context): The context.
-            url (str): The YouTube video URL.
-        """
         await self.download_and_convert(ctx, url, to_mp3=False)
-
-add_cog(ConverterCog(bot))
