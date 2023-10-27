@@ -9,6 +9,7 @@ import time
 class ConverterCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
+        self.data_path = self.bot.user_data_path(ConverterCog)
 
     @commands.command()
     async def ytmp3(self, ctx, url):
@@ -30,16 +31,14 @@ class ConverterCog(commands.Cog):
             # Get the video code from the YouTube URL
             video_code = yt.video_id
 
-            audio_path = f'/mnt/converter/{video_code}'
+            audio_path = os.path.join(self.data_path, f'{video_code}.mp3')
 
             async with aiohttp.ClientSession() as session:
                 async with session.get(stream.url) as response:
                     audio_data = await response.read()
 
-            with open(f'{audio_path}.mp3', 'wb') as audio_file:
+            with open(audio_path, 'wb') as audio_file:
                 audio_file.write(audio_data)
-
-            audio_path = f'{audio_path}.mp3'
 
             await asyncio.sleep(5)
 
@@ -79,7 +78,7 @@ class ConverterCog(commands.Cog):
 
             # Generate a unique filename with timestamp
             video_code = str(int(time.time())) + ".mp4"
-            video_path = os.path.join("/mnt/converter", video_code)
+            video_path = os.path.join(self.data_path, video_code)
 
             async with aiohttp.ClientSession() as session:
                 async with session.get(stream.url) as response:
