@@ -39,7 +39,7 @@ class ConverterCog(commands.Cog):
             await asyncio.sleep(5)
 
             user = ctx.message.author
-            await ctx.send(f'{user.mention}, your video conversion to MP3 is complete. Here is the converted audio:', file=discord.File(audio_path)
+            await ctx.send(f'{user.mention}, your video conversion to MP3 is complete. Here is the converted audio:', file=discord.File(str(audio_path))  # Add the missing closing parenthesis
 
             # Remove the file after 10 minutes
             await asyncio.sleep(600)
@@ -81,7 +81,7 @@ class ConverterCog(commands.Cog):
             await asyncio.sleep(5)
 
             user = ctx.message.author
-            await ctx.send(f'{user.mention}, your video conversion to mp4 is complete. Here is the converted video:', file=discord.File(video_path)
+            await ctx.send(f'{user.mention}, your video conversion to mp4 is complete. Here is the converted video:', file=discord.File(str(video_path))  # Add the missing closing parenthesis
 
             # Remove the file after 10 minutes
             await asyncio.sleep(600)
