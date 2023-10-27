@@ -1,9 +1,9 @@
+import os
 import discord
 from redbot.core import commands
 from pytube import YouTube
 import asyncio
 import time
-import os
 
 class ConverterCog(commands.Cog):
     def __init__(self, bot):
@@ -29,10 +29,10 @@ class ConverterCog(commands.Cog):
             # Get the video code from the YouTube URL
             video_code = yt.video_id
 
-            audio_path = f'/mnt/converter/{video_code}'
+            audio_path = str(await self.cog_data_path() / f'{video_code}.mp3')
 
             # Download the audio without an extension
-            stream.download(output_path="/mnt/converter", filename=video_code)
+            stream.download(output_path=str(await self.cog_data_path()), filename=video_code)
 
             # Rename the file with .mp3 extension
             os.rename(audio_path, f'{audio_path}.mp3')
@@ -41,7 +41,7 @@ class ConverterCog(commands.Cog):
 
             await asyncio.sleep(5)
 
-            user = ctx.message.author
+            user = ctx.author
             await ctx.send(f'{user.mention}, your video conversion to MP3 is complete. Here is the converted audio:', file=discord.File(audio_path))
 
             # Remove the file after 10 minutes
@@ -77,13 +77,13 @@ class ConverterCog(commands.Cog):
 
             # Generate a unique filename with timestamp
             video_code = str(int(time.time())) + ".mp4"
-            video_path = os.path.join("/mnt/converter", video_code)
+            video_path = str(await self.cog_data_path() / video_code)
 
-            stream.download(output_path="/mnt/converter", filename=video_code)
+            stream.download(output_path=str(await self.cog_data_path()), filename=video_code)
 
             await asyncio.sleep(5)
 
-            user = ctx.message.author
+            user = ctx.author
             await ctx.send(f'{user.mention}, your video conversion to mp4 is complete. Here is the converted video:', file=discord.File(video_path))
 
             # Remove the file after 10 minutes
