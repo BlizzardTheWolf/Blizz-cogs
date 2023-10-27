@@ -9,9 +9,6 @@ class ConverterCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    async def cog_data_path(self):
-        return self.bot.cog_data_path(self)
-
     @commands.command()
     async def ytmp3(self, ctx, url):
         try:
@@ -32,15 +29,16 @@ class ConverterCog(commands.Cog):
             # Get the video code from the YouTube URL
             video_code = yt.video_id
 
-            audio_path = str(await self.cog_data_path() / f'{video_code}.mp3')
+            audio_path = f'{video_code}.mp3'
+            data_path = self.bot.user_data_path() / 'converter'
 
             # Download the audio without an extension
-            stream.download(output_path=str(await self.cog_data_path()), filename=video_code)
+            stream.download(output_path=data_path, filename=video_code)
 
             # Rename the file with .mp3 extension
-            os.rename(audio_path, f'{audio_path}.mp3')
+            os.rename(data_path / audio_path, data_path / f'{audio_path}.mp3')
 
-            audio_path = f'{audio_path}.mp3'
+            audio_path = str(data_path / f'{audio_path}.mp3')
 
             await asyncio.sleep(5)
 
@@ -49,7 +47,7 @@ class ConverterCog(commands.Cog):
 
             # Remove the file after 10 minutes
             await asyncio.sleep(600)
-            os.remove(audio_path)
+            os.remove(data_path / f'{audio_path}')
 
         except Exception as e:
             error_message = str(e)
@@ -80,9 +78,9 @@ class ConverterCog(commands.Cog):
 
             # Generate a unique filename with timestamp
             video_code = str(int(time.time())) + ".mp4"
-            video_path = str(await self.cog_data_path() / video_code)
+            video_path = str(self.bot.user_data_path() / 'converter' / video_code)
 
-            stream.download(output_path=str(await self.cog_data_path()), filename=video_code)
+            stream.download(output_path=self.bot.user_data_path() / 'converter', filename=video_code)
 
             await asyncio.sleep(5)
 
