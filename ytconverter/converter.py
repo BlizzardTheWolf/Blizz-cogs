@@ -1,37 +1,47 @@
 import discord
 from redbot.core import commands
-from youtube_dl import YoutubeDL
-import os
+from pytube import YouTube
 import asyncio
 import time
+import os
 
 class ConverterCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.converter_dir = os.path.join(str(self.bot.cog_data_path(self)), "downloads")
-
-    @commands.Cog.listener()
-    async def cog_check(self, ctx):
-        if not ctx.author.bot:
-            return True
-
-    async def download_and_convert(self, ctx, url, only_audio):
-        ydl_opts = {
-            "format": "bestaudio" if only_audio else "best",
-            "outtmpl": os.path.join(self.converter_dir, "%(title)s.%(ext)s"),
-        }
-        with YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            filename = os.path.join(self.converter_dir, info["_filename"])
-            return filename
 
     @commands.command()
     async def ytmp3(self, ctx, url):
         try:
-            await ctx.send("Converting the video to MP3, please wait...")
-            audio_path = await self.download_and_convert(ctx, url, only_audio=True)
+            yt = YouTube(url)
 
-            user = ctx.author
+            if yt.age_restricted:
+                await ctx.send("This video is age-restricted and cannot be converted.")
+                return
+
+            stream = yt.streams.filter(only_audio=True).first()
+
+            if not stream:
+                await ctx.send("Could not find an audio stream for download.")
+                return
+
+            await ctx.send("Converting the video to MP3, please wait...")
+
+            # Get the video code from the YouTube URL
+            video_code = yt.video_id
+
+            audio_path = f'/mnt/converter/{video_code}'
+
+            # Download the audio without an extension
+            stream.download(output_path="/mnt/converter", filename=video_code)
+
+            # Rename the file with .mp3 extension
+            os.rename(audio_path, f'{audio_path}.mp3')
+
+            audio_path = f'{audio_path}.mp3'
+
+            await asyncio.sleep(5)
+
+            user = ctx.message.author
             await ctx.send(f'{user.mention}, your video conversion to MP3 is complete. Here is the converted audio:', file=discord.File(audio_path))
 
             # Remove the file after 10 minutes
@@ -45,10 +55,35 @@ class ConverterCog(commands.Cog):
     @commands.command()
     async def ytmp4(self, ctx, url):
         try:
-            await ctx.send("Converting the video to mp4, please wait...")
-            video_path = await self.download_and_convert(ctx, url, only_audio=False)
+            yt = YouTube(url)
 
-            user = ctx.author
+            if yt.age_restricted:
+                await ctx.send("This video is age-restricted and cannot be converted.")
+                return
+
+            stream = yt.streams.filter(progressive=True, file_extension="mp4").order_by('resolution').desc().first()
+
+            if not stream:
+                await ctx.send("Could not find a suitable mp4 stream for download.")
+                return
+
+            duration = yt.length
+
+            if duration > 600:
+                await ctx.send("Video exceeds the maximum time limit of 10 minutes.")
+                return
+
+            await ctx.send("Converting the video to mp4, please wait...")
+
+            # Generate a unique filename with timestamp
+            video_code = str(int(time.time())) + ".mp4"
+            video_path = os.path.join("/mnt/converter", video_code)
+
+            stream.download(output_path="/mnt/converter", filename=video_code)
+
+            await asyncio.sleep(5)
+
+            user = ctx.message.author
             await ctx.send(f'{user.mention}, your video conversion to mp4 is complete. Here is the converted video:', file=discord.File(video_path))
 
             # Remove the file after 10 minutes
@@ -58,3 +93,6 @@ class ConverterCog(commands.Cog):
         except Exception as e:
             error_message = str(e)
             await ctx.send(f"An error occurred during video conversion. Please check the URL and try again.\nError details: {error_message}")
+
+def setup(bot):
+    bot.add_cog(ConverterCog(bot))
