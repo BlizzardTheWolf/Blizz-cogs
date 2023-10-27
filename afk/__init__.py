@@ -1,5 +1,4 @@
-# Make sure you have this line in your __init__.py to register the cog when the bot starts
-from .afk import AFK
+from .converter import ConverterCog
 
 async def setup(bot):
-    await bot.add_cog(AFK(bot))
+    await bot.add_cog(ConverterCog(bot))
