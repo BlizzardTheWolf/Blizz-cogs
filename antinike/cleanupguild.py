@@ -72,6 +72,3 @@ class CleanupGuild(commands.Cog):
         )
 
         await ctx.send(output_message)
-
-def setup(bot):
-    bot.add_cog(CleanupGuild(bot))
