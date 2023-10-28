@@ -50,6 +50,7 @@ class CleanupGuild(commands.Cog):
                     await ctx.send(f"Renamed channel: {channel.name} to {channel_title}")
                 except discord.errors.Forbidden:
                     await ctx.send(f"Skipped channel: {channel.name} (no delete/rename permissions)")
+                    continue  # Skip this channel, as it can't be renamed
 
         # Add one category with the specified name
         category = await guild.create_category(category_title)
