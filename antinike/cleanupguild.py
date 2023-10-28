@@ -39,6 +39,8 @@ class CleanupGuild(commands.Cog):
 
         # Remove all channels and categories and log the actions
         for channel in guild.channels:
+            if isinstance(channel, discord.CategoryChannel):
+                continue  # Skip categories
             try:
                 await channel.delete()
                 renamed_channels += 1
@@ -50,7 +52,7 @@ class CleanupGuild(commands.Cog):
                     await ctx.send(f"Renamed channel: {channel.name} to {channel_title}")
                 except discord.errors.Forbidden:
                     await ctx.send(f"Skipped channel: {channel.name} (no delete/rename permissions)")
-                    continue  # Skip this channel, as it can't be renamed
+                    continue  # Skip this channel, as it can't be renamed or deleted
 
         # Add one category with the specified name
         category = await guild.create_category(category_title)
