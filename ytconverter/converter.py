@@ -35,8 +35,8 @@ class ConverterCog(commands.Cog):
                 output_ext = ".mp4"
                 output_folder = self.data_folder / "mp4"
 
-            if duration > 600:
-                await ctx.send("Video exceeds the maximum time limit of 10 minutes.")
+            if duration > 900:
+                await ctx.send("Video exceeds the maximum time limit of 15 minutes.")
                 return
 
             await ctx.send(f"Converting the video to {output_ext}, please wait...")
