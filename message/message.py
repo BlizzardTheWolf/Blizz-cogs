@@ -12,7 +12,7 @@ class MessageCog(commands.Cog):
     async def message(self, ctx, user: discord.User, embed: bool = True, *, message_content):
         """
         Send a message to a user via DM through the bot.
-        Usage: [p]message <user (@user or user id)> [embed=True] <message>
+        Usage: [p]message <user (@user or user id)> <embed true/false> <message>
         """
         try:
             # Remove the invoking user's name from the message content
