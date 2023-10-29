@@ -68,10 +68,7 @@ class ConverterCog(commands.Cog):
         Converts a YouTube video to MP3.
     
         Parameters:
-        - ctx (commands.Context): The command context.
-        - url (str): The URL of the YouTube video to convert.
-    
-        Usage: [p]ytmp3 <video link>
+        `<url>` The url of the video you want to convert.
         """
         await self.download_and_convert(ctx, url, to_mp3=True)
     
@@ -79,12 +76,10 @@ class ConverterCog(commands.Cog):
     async def ytmp4(self, ctx, url):
         """
         Converts a YouTube video to MP4.
+
+        **Parameters:**
+        `<url>` The url of the video you want to convert.
     
-        Parameters:
-        - ctx (commands.Context): The command context.
-        - url (str): The URL of the YouTube video to convert.
-    
-        Usage: [p]ytmp4 <video link>
         """
         await self.download_and_convert(ctx, url, to_mp3=False)
     
