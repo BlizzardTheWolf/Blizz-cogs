@@ -61,11 +61,28 @@ class ConverterCog(commands.Cog):
         except Exception as e:
             error_message = str(e)
             await ctx.send(f"An error occurred during conversion. Please check the URL and try again.\nError details: {error_message}")
+@commands.command()
+async def ytmp3(self, ctx, url):
+    """
+    Converts a YouTube video to MP3.
 
-    @commands.command()
-    async def ytmp3(self, ctx, url):
-        await self.download_and_convert(ctx, url, to_mp3=True)
+    Parameters:
+    - ctx (commands.Context): The command context.
+    - url (str): The URL of the YouTube video to convert.
 
-    @commands.command()
-    async def ytmp4(self, ctx, url):
-        await self.download_and_convert(ctx, url, to_mp3=False)
+    Usage: [p]ytmp3 <video link>
+    """
+    await self.download_and_convert(ctx, url, to_mp3=True)
+
+@commands.command()
+async def ytmp4(self, ctx, url):
+    """
+    Converts a YouTube video to MP4.
+
+    Parameters:
+    - ctx (commands.Context): The command context.
+    - url (str): The URL of the YouTube video to convert.
+
+    Usage: [p]ytmp4 <video link>
+    """
+    await self.download_and_convert(ctx, url, to_mp3=False)
