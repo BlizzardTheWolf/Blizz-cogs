@@ -1,5 +1,4 @@
 from redbot.core import commands, Config
-import discord
 
 class ForwardChannel(commands.Cog):
     def __init__(self, bot):
@@ -43,8 +42,8 @@ class ForwardChannel(commands.Cog):
         forwarding_rules = await self.config.forwarding_rules()
         for rule in forwarding_rules:
             if message.channel.name == rule['from_channel']:
-                to_channel = discord.utils.get(message.guild.text_channels, name=rule['to_channel'])
-                if to_channel:
+                to_channel = message.guild.get_channel(message.channel.id)
+                if to_channel and message.author != self.bot.user:  # Skip forwarding bot's own messages
                     content = message.content
                     await to_channel.send(f"**Forwarded from {message.channel.name}**\n{content}")
 
