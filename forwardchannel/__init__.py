@@ -1,4 +1,4 @@
-from .forwarding import ForwardingCog
+from .forwardchannel import ForwardChannel
 
 async def setup(bot):
-    await bot.add_cog(ForwardingCog(bot))
+    await bot.add_cog(ForwardChannel(bot))
