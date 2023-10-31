@@ -40,13 +40,14 @@ class ForwardChannel(commands.Cog):
         await ctx.send(f"Added forwarding rule {rule_id}: {from_channel} -> {to_channel}")
 
     async def forward_message(self, message):
-        forwarding_rules = await self.config.forwarding_rules()
-        for rule in forwarding_rules:
-            if message.channel.name == rule['from_channel']:
-                to_channel = message.guild.get_channel(message.channel.id)
-                if to_channel:
-                    content = f"**Forwarded from {message.author.name} ({message.author.id}):**\n{message.content}"
-                    await to_channel.send(content, embed=message.embeds[0] if message.embeds else None)
+        if not message.author.bot:  # Ensure both user and bot messages are forwarded
+            forwarding_rules = await self.config.forwarding_rules()
+            for rule in forwarding_rules:
+                if message.channel.name == rule['from_channel']:
+                    to_channel = message.guild.get_channel(message.channel.id)
+                    if to_channel:
+                        content = f"**Forwarded from {message.author.name} ({message.author.id}):**\n{message.content}"
+                        await to_channel.send(content, embed=message.embeds[0] if message.embeds else None)
 
 def setup(bot):
     cog = ForwardChannel(bot)
