@@ -1,3 +1,4 @@
+import discord
 from redbot.core import commands, Config
 
 class ForwardChannel(commands.Cog):
@@ -9,7 +10,7 @@ class ForwardChannel(commands.Cog):
     @commands.group()
     async def forward(self, ctx):
         """Manage forwarding rules."""
-    
+
     @forward.command(name="list")
     async def list_forwarding_rules(self, ctx):
         forwarding_rules = await self.config.forwarding_rules()
@@ -43,9 +44,9 @@ class ForwardChannel(commands.Cog):
         for rule in forwarding_rules:
             if message.channel.name == rule['from_channel']:
                 to_channel = message.guild.get_channel(message.channel.id)
-                if to_channel and message.author != self.bot.user:  # Skip forwarding bot's own messages
-                    content = message.content
-                    await to_channel.send(f"**Forwarded from {message.channel.name}**\n{content}")
+                if to_channel:
+                    content = f"**Forwarded from {message.author.name} ({message.author.id}):**\n{message.content}"
+                    await to_channel.send(content, embed=message.embeds[0] if message.embeds else None)
 
 def setup(bot):
     cog = ForwardChannel(bot)
