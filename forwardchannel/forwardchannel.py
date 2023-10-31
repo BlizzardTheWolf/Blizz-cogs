@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import Cog, command
 
-class ForwardingCog(Cog):
+class ForwardChannel(Cog):
     def __init__(self, bot):
         self.bot = bot
         self.forwarding_rules = []
@@ -59,6 +59,3 @@ class ForwardingCog(Cog):
             await ctx.send(f"Added forwarding rule {rule_id}: {from_channel_name} -> {to_channel_name}")
         else:
             await ctx.send("One or both of the specified channels do not exist.")
-
-def setup(bot):
-    bot.add_cog(ForwardingCog(bot))
