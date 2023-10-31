@@ -1,4 +1,5 @@
 from redbot.core import commands, Config
+import discord  # Import the discord module
 
 class ForwardChannel(commands.Cog):
     def __init__(self, bot):
