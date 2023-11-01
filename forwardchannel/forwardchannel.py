@@ -4,7 +4,7 @@ from redbot.core import commands, Config
 class ForwardChannel(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.config = Config.get_conf(self, identifier=1234567890, force_registration=True)
+        self.config = Config.get_conf(self, identifier=1283567890, force_registration=True)
         self.config.register_global(forwarding_rules=[])
 
     @commands.group()
@@ -40,7 +40,11 @@ class ForwardChannel(commands.Cog):
         await ctx.send(f"Added forwarding rule {rule_id}: {from_channel} -> {to_channel}")
 
     @commands.Cog.listener()
-    async def on_message_without_command(self, message):
+    async def on_message(self, message):
+        # Replace 'your_bot_prefix' with your actual bot's prefix
+        if message.content.startswith(';'):
+            return
+
         forwarding_rules = await self.config.forwarding_rules()
         for rule in forwarding_rules:
             if message.channel.name == rule['from_channel']:
@@ -54,6 +58,3 @@ class ForwardChannel(commands.Cog):
                     else:
                         await to_channel.send(content)
 
-def setup(bot):
-    cog = ForwardChannel(bot)
-    bot.add_cog(cog)
