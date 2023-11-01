@@ -40,11 +40,11 @@ class ForwardChannel(commands.Cog):
         await ctx.send(f"Added forwarding rule {rule_id}: {from_channel} -> {to_channel}")
 
     @commands.Cog.listener()
-    async def on_message(self, message):
+    async def on_message_without_command(self, message):
         forwarding_rules = await self.config.forwarding_rules()
         for rule in forwarding_rules:
             if message.channel.name == rule['from_channel']:
-                to_channel = message.guild.get_channel(message.guild.get_channel_named(rule['to_channel']))
+                to_channel = message.guild.get_channel(int(rule['to_channel']))
                 if to_channel:
                     content = f"**Forwarded from {message.author.name} ({message.author.id}):**\n{message.content}"
                     if message.embeds:
@@ -52,3 +52,7 @@ class ForwardChannel(commands.Cog):
                         await to_channel.send(content, embed=embed)
                     else:
                         await to_channel.send(content)
+
+def setup(bot):
+    cog = ForwardChannel(bot)
+    bot.add_cog(cog)
