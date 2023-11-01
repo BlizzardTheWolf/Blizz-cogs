@@ -41,15 +41,15 @@ class ForwardChannel(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message_without_command(self, message):
-        print("Listener triggered.")  # Add this debug print statement
         forwarding_rules = await self.config.forwarding_rules()
         for rule in forwarding_rules:
             if message.channel.name == rule['from_channel']:
                 to_channel = message.guild.get_channel(int(rule['to_channel']))
                 if to_channel:
-                    content = f"**Forwarded from {message.author.name} ({message.author.id}):**\n{message.content}"
+                    content = f"**Forwarded from {message.author.name} ({message.author.id}):**\n{message.clean_content}"
                     if message.embeds:
-                        embed = discord.Embed.from_dict({**message.embeds[0].to_dict(), "timestamp": str(message.created_at)})
+                        embed = message.embeds[0]
+                        embed.set_author(name=f"{message.author.name} ({message.author.id})")
                         await to_channel.send(content, embed=embed)
                     else:
                         await to_channel.send(content)
