@@ -41,7 +41,6 @@ class ForwardChannel(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message_without_command(self, message):
-    print("Listener triggered.")
         forwarding_rules = await self.config.forwarding_rules()
         for rule in forwarding_rules:
             if message.channel.name == rule['from_channel']:
