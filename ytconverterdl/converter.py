@@ -2,7 +2,7 @@ import discord
 from redbot.core import commands
 import youtube_dl
 import asyncio
-import time
+time
 import os
 from redbot.core import data_manager
 import shutil
@@ -21,6 +21,7 @@ class ConverterCog(commands.Cog):
                     'preferedformat': 'mp4' if not to_mp3 else 'mp3',
                 }],
                 'outtmpl': str(self.data_folder / "downloads" / f'%(title)s.%(ext)s'),
+                'verbose': True,  # Add this line to enable verbose output
             }
 
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
@@ -60,3 +61,6 @@ class ConverterCog(commands.Cog):
         `<url>` The url of the video you want to convert.
         """
         await self.download_and_convert(ctx, url, to_mp3=False)
+
+def setup(bot):
+    bot.add_cog(ConverterCog(bot))
