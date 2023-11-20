@@ -2,7 +2,7 @@ import discord
 from redbot.core import commands
 import youtube_dl
 import asyncio
-time
+import time  # Don't forget to import the time module
 import os
 from redbot.core import data_manager
 import shutil
@@ -21,7 +21,7 @@ class ConverterCog(commands.Cog):
                     'preferedformat': 'mp4' if not to_mp3 else 'mp3',
                 }],
                 'outtmpl': str(self.data_folder / "downloads" / f'%(title)s.%(ext)s'),
-                'verbose': True,  # Add this line to enable verbose output
+                'verbose': True,
             }
 
             with youtube_dl.YoutubeDL(ydl_opts) as ydl:
@@ -32,7 +32,7 @@ class ConverterCog(commands.Cog):
 
             user = ctx.message.author
             await ctx.send(f'{user.mention}, your video conversion to {"mp3" if to_mp3 else "mp4"} is complete. Here is the converted file:',
-                           file=discord.File(video_path))
+                            file=discord.File(video_path))
 
             # Remove the file after 10 minutes
             await asyncio.sleep(600)
@@ -51,7 +51,7 @@ class ConverterCog(commands.Cog):
         `<url>` The url of the video you want to convert.
         """
         await self.download_and_convert(ctx, url, to_mp3=True)
-    
+
     @commands.command()
     async def ytmp4(self, ctx, url):
         """
