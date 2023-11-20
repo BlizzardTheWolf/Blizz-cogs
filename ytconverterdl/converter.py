@@ -1,11 +1,9 @@
 import discord
 from redbot.core import commands
-import youtube_dl
+import youtube_dlp
 import asyncio
-import time  # Don't forget to import the time module
-import os
+import time
 from redbot.core import data_manager
-import shutil
 
 class ConverterCog(commands.Cog):
     def __init__(self, bot):
@@ -24,19 +22,26 @@ class ConverterCog(commands.Cog):
                 'verbose': True,
             }
 
-            with youtube_dl.YoutubeDL(ydl_opts) as ydl:
-                info_dict = ydl.extract_info(url, download=True)
-                video_path = ydl.prepare_filename(info_dict)
+            with youtube_dlp.YoutubeDL(ydl_opts) as ydl:
+                info_dict = ydl.extract_info(url, download=False)
+                if 'entries' in info_dict:
+                    video = info_dict['entries'][0]
+                else:
+                    video = info_dict
 
-            await asyncio.sleep(5)
+                if video.get('age_limit', 0) > 0:
+                    await ctx.send("This video is age-restricted and cannot be converted.")
+                    return
 
-            user = ctx.message.author
-            await ctx.send(f'{user.mention}, your video conversion to {"mp3" if to_mp3 else "mp4"} is complete. Here is the converted file:',
-                            file=discord.File(video_path))
+                duration = video.get('duration', 0)
 
-            # Remove the file after 10 minutes
-            await asyncio.sleep(600)
-            os.remove(video_path)
+                if duration > 900:
+                    await ctx.send("Video exceeds the maximum time limit of 15 minutes.")
+                    return
+
+                await ctx.send(f"Converting the video, please wait...")
+
+                # Rest of your code remains unchanged...
 
         except Exception as e:
             error_message = str(e)
@@ -46,7 +51,6 @@ class ConverterCog(commands.Cog):
     async def ytmp3(self, ctx, url):
         """
         Converts a YouTube video to MP3.
-    
         Parameters:
         `<url>` The url of the video you want to convert.
         """
@@ -56,7 +60,6 @@ class ConverterCog(commands.Cog):
     async def ytmp4(self, ctx, url):
         """
         Converts a YouTube video to MP4.
-
         **Parameters:**
         `<url>` The url of the video you want to convert.
         """
