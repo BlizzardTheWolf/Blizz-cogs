@@ -19,7 +19,7 @@ class ConverterCog(commands.Cog):
                 'outtmpl': str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}"),
             }
 
-            await ctx.trigger_typing()  # Simulate typing indication
+            await ctx.channel.trigger_typing()  # Simulate typing indication
 
             with YoutubeDL(ydl_opts) as ydl:
                 info_dict = ydl.extract_info(url, download=False)
