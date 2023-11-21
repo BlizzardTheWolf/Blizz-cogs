@@ -65,4 +65,9 @@ class ConverterCog(commands.Cog):
         `<url>` The URL of the video you want to convert.
         """
         output_folder = self.data_folder / "mp4"
-        self.bot.loop.create_task(self.convert_and_send(ctx, url, to_mp3=False, output_folder=output_folder))
+        ydl_opts = {
+            'format': 'bestvideo+bestaudio/best',
+            'outtmpl': str(output_folder / "%(title)s.%(ext)s"),
+            'postprocessors': [{'key': 'FFmpegVideoConvertor', 'preferedformat': 'mp4'}],
+        }
+        self.bot.loop.create_task(self.convert_and_send(ctx, url, to_mp3=False, output_folder=output_folder, ydl_opts=ydl_opts))
