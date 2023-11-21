@@ -19,7 +19,7 @@ class ConverterCog(commands.Cog):
                 'outtmpl': str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}"),
             }
 
-            await ctx.trigger_typing()  # Start typing indication
+            await ctx.trigger_typing()  # Simulate typing indication
 
             with YoutubeDL(ydl_opts) as ydl:
                 info_dict = ydl.extract_info(url, download=False)
@@ -31,7 +31,7 @@ class ConverterCog(commands.Cog):
 
                 ydl.download([url])
 
-            await asyncio.sleep(5)
+            await asyncio.sleep(5)  # Simulate conversion time
 
             user = ctx.message.author
             downloaded_file_path = output_folder / f"{video_info['id']}.{'mp3' if to_mp3 else 'webm'}"
@@ -52,7 +52,7 @@ class ConverterCog(commands.Cog):
             await ctx.send(f"An error occurred during conversion. Please check the URL and try again.\nError details: {error_message}")
 
         finally:
-            await ctx.trigger_typing(False)  # Stop typing indication
+            await asyncio.sleep(0)  # Ensure that the bot stops typing
 
     @commands.command()
     async def ytmp3(self, ctx, url):
