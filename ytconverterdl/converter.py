@@ -27,10 +27,6 @@ class ConverterCog(commands.Cog):
                 else:
                     video_info = info_dict
 
-                if video_info.get('age_limit') is not None:
-                    await ctx.send("This video is age-restricted and cannot be converted.")
-                    return
-
                 ydl.download([url])
 
             await asyncio.sleep(5)
