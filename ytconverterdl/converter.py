@@ -3,6 +3,7 @@ from redbot.core import commands
 from yt_dlp import YoutubeDL
 import asyncio
 from redbot.core import data_manager
+from pathlib import Path
 
 class ConverterCog(commands.Cog):
     def __init__(self, bot):
@@ -15,7 +16,7 @@ class ConverterCog(commands.Cog):
 
             ydl_opts = {
                 'format': 'bestaudio/best' if to_mp3 else 'bestvideo[ext=mp4]+bestaudio/best',
-                'outtmpl': str(output_folder / f"%(title)s.{ 'mp3' if to_mp3 else 'mp4' }"),
+                'outtmpl': str(output_folder / f"%(id)s.{ 'mp3' if to_mp3 else 'mp4' }"),
             }
 
             with YoutubeDL(ydl_opts) as ydl:
@@ -31,14 +32,15 @@ class ConverterCog(commands.Cog):
             await asyncio.sleep(5)
 
             user = ctx.message.author
-            file_path = output_folder / f"{video_info['title']}.{ 'mp3' if to_mp3 else 'mp4' }"
+            file_path = output_folder / f"{video_info['id']}.{ 'mp3' if to_mp3 else 'mp4' }"
 
             await ctx.send(f'{user.mention}, your video conversion to {"MP3" if to_mp3 else "MP4"} is complete. Here is the converted file:',
                            file=discord.File(str(file_path)))
 
-            # Remove the file after 10 minutes
+            # Remove the file after 10 minutes if it exists
             await asyncio.sleep(600)
-            file_path.unlink()
+            if file_path.exists():
+                file_path.unlink()
 
         except Exception as e:
             error_message = str(e)
