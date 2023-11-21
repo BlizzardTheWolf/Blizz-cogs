@@ -16,7 +16,7 @@ class ConverterCog(commands.Cog):
 
             ydl_opts = {
                 'format': 'bestaudio/best' if to_mp3 else 'bestvideo[ext=mp4]+bestaudio/best',
-                'outtmpl': str(output_folder / f"%(id)s.{ 'mp3' if to_mp3 else 'mp4' }"),
+                'outtmpl': str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}"),
             }
 
             with YoutubeDL(ydl_opts) as ydl:
@@ -32,15 +32,18 @@ class ConverterCog(commands.Cog):
             await asyncio.sleep(5)
 
             user = ctx.message.author
-            file_path = output_folder / f"{video_info['id']}.{ 'mp3' if to_mp3 else 'mp4' }"
+            downloaded_file_path = output_folder / f"{video_info['id']}.{'mp3' if to_mp3 else 'webm'}"
+            renamed_file_path = output_folder / f"{video_info['id']}.{'mp3' if to_mp3 else 'mp4'}"
+
+            downloaded_file_path.rename(renamed_file_path)
 
             await ctx.send(f'{user.mention}, your video conversion to {"MP3" if to_mp3 else "MP4"} is complete. Here is the converted file:',
-                           file=discord.File(str(file_path)))
+                           file=discord.File(str(renamed_file_path)))
 
             # Remove the file after 10 minutes if it exists
             await asyncio.sleep(600)
-            if file_path.exists():
-                file_path.unlink()
+            if renamed_file_path.exists():
+                renamed_file_path.unlink()
 
         except Exception as e:
             error_message = str(e)
