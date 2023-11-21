@@ -36,7 +36,7 @@ class ConverterCog(commands.Cog):
                 file_path = output_folder / f"{video_info['title']}.{video_info['ext']}"
 
                 await ctx.send(f'{user.mention}, your video conversion to {"MP3" if to_mp3 else "MP4"} is complete. Here is the converted file:',
-                            file=discord.File(str(file_path)))
+                               file=discord.File(str(file_path)))
 
                 # Remove the file after 10 minutes
                 await asyncio.sleep(600)
