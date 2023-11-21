@@ -5,7 +5,6 @@ import asyncio
 import time
 import os
 from redbot.core import data_manager
-import shutil
 
 class ConverterCog(commands.Cog):
     def __init__(self, bot):
@@ -14,33 +13,34 @@ class ConverterCog(commands.Cog):
 
     async def download_and_convert(self, ctx, url, to_mp3=False):
         try:
-            ydl_opts = {
-                'format': 'bestaudio/best' if to_mp3 else 'bestvideo+bestaudio/best',
-                'outtmpl': str(self.data_folder / "mp3" / "%(title)s.%(ext)s") if to_mp3 else str(self.data_folder / "mp4" / "%(title)s.%(ext)s"),
-            }
+            async with ctx.typing():
+                ydl_opts = {
+                    'format': 'bestaudio/best' if to_mp3 else 'bestvideo+bestaudio/best',
+                    'outtmpl': str(self.data_folder / "mp3" / "%(title)s.%(ext)s") if to_mp3 else str(self.data_folder / "mp4" / "%(title)s.%(ext)s"),
+                }
 
-            with YoutubeDL(ydl_opts) as ydl:
-                info_dict = ydl.extract_info(url, download=False)
+                with YoutubeDL(ydl_opts) as ydl:
+                    info_dict = ydl.extract_info(url, download=False)
 
-                if 'entries' in info_dict:
-                    video_info = info_dict['entries'][0]
-                else:
-                    video_info = info_dict
+                    if 'entries' in info_dict:
+                        video_info = info_dict['entries'][0]
+                    else:
+                        video_info = info_dict
 
-                ydl.download([url])
+                    ydl.download([url])
 
-            await asyncio.sleep(5)
+                await asyncio.sleep(5)
 
-            user = ctx.message.author
-            output_folder = self.data_folder / ("mp3" if to_mp3 else "mp4")
-            file_path = output_folder / f"{video_info['title']}.{video_info['ext']}"
+                user = ctx.message.author
+                output_folder = self.data_folder / ("mp3" if to_mp3 else "mp4")
+                file_path = output_folder / f"{video_info['title']}.{video_info['ext']}"
 
-            await ctx.send(f'{user.mention}, your video conversion to {"MP3" if to_mp3 else "MP4"} is complete. Here is the converted file:',
-                           file=discord.File(str(file_path)))
+                await ctx.send(f'{user.mention}, your video conversion to {"MP3" if to_mp3 else "MP4"} is complete. Here is the converted file:',
+                            file=discord.File(str(file_path)))
 
-            # Remove the file after 10 minutes
-            await asyncio.sleep(600)
-            file_path.unlink()
+                # Remove the file after 10 minutes
+                await asyncio.sleep(600)
+                file_path.unlink()
 
         except Exception as e:
             error_message = str(e)
