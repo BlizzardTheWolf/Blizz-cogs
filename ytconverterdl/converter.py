@@ -2,10 +2,7 @@ import discord
 from redbot.core import commands
 from yt_dlp import YoutubeDL
 import asyncio
-import time
-import os
 from redbot.core import data_manager
-import shutil
 
 class ConverterCog(commands.Cog):
     def __init__(self, bot):
@@ -14,9 +11,11 @@ class ConverterCog(commands.Cog):
 
     async def download_and_convert(self, ctx, url, to_mp3=False):
         try:
+            output_folder = self.data_folder / ("mp3" if to_mp3 else "mp4")
+
             ydl_opts = {
-                'format': 'bestaudio/best' if to_mp3 else 'bestvideo+bestaudio/best',
-                'outtmpl': str(self.data_folder / "mp3" / "%(title)s.%(ext)s") if to_mp3 else str(self.data_folder / "mp4" / "%(title)s.%(ext)s"),
+                'format': 'bestaudio/best' if to_mp3 else 'bestvideo[ext=mp4]+bestaudio/best',
+                'outtmpl': str(output_folder / f"%(title)s.{ 'mp3' if to_mp3 else 'mp4' }"),
             }
 
             with YoutubeDL(ydl_opts) as ydl:
@@ -32,7 +31,6 @@ class ConverterCog(commands.Cog):
             await asyncio.sleep(5)
 
             user = ctx.message.author
-            output_folder = self.data_folder / ("mp3" if to_mp3 else "mp4")
             file_path = output_folder / f"{video_info['title']}.{video_info['ext']}"
 
             await ctx.send(f'{user.mention}, your video conversion to {"MP3" if to_mp3 else "MP4"} is complete. Here is the converted file:',
