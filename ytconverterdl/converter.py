@@ -19,6 +19,8 @@ class ConverterCog(commands.Cog):
                 'outtmpl': str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}"),
             }
 
+            await ctx.trigger_typing()  # Start typing indication
+
             with YoutubeDL(ydl_opts) as ydl:
                 info_dict = ydl.extract_info(url, download=False)
 
@@ -48,6 +50,9 @@ class ConverterCog(commands.Cog):
         except Exception as e:
             error_message = str(e)
             await ctx.send(f"An error occurred during conversion. Please check the URL and try again.\nError details: {error_message}")
+
+        finally:
+            await ctx.trigger_typing(False)  # Stop typing indication
 
     @commands.command()
     async def ytmp3(self, ctx, url):
