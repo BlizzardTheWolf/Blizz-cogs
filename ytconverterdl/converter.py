@@ -4,7 +4,6 @@ from yt_dlp import YoutubeDL
 import asyncio
 import os
 from redbot.core import data_manager
-from discord.ext import tasks
 
 class ConverterCog(commands.Cog):
     def __init__(self, bot):
@@ -31,8 +30,8 @@ class ConverterCog(commands.Cog):
             user = ctx.message.author
             file_path = output_folder / f"{video_info['title']}.{video_info['ext']}"
 
-            await ctx.send(f'Please wait, your video is being converted to {"MP3" if to_mp3 else "MP4"}...')
-            await asyncio.sleep(5)  # Simulate conversion time
+            async with ctx.typing():
+                await asyncio.sleep(5)  # Simulate conversion time
 
             await ctx.send(f'{user.mention}, your video conversion to {"MP3" if to_mp3 else "MP4"} is complete. Here is the converted file:',
                            file=discord.File(str(file_path)))
@@ -54,6 +53,7 @@ class ConverterCog(commands.Cog):
         `<url>` The URL of the video you want to convert.
         """
         output_folder = self.data_folder / "mp3"
+        await ctx.trigger_typing()  # Trigger typing to show the "Thinking..." status
         self.bot.loop.create_task(self.convert_and_send(ctx, url, to_mp3=True, output_folder=output_folder))
 
     @commands.command()
@@ -65,4 +65,5 @@ class ConverterCog(commands.Cog):
         `<url>` The URL of the video you want to convert.
         """
         output_folder = self.data_folder / "mp4"
+        await ctx.trigger_typing()  # Trigger typing to show the "Thinking..." status
         self.bot.loop.create_task(self.convert_and_send(ctx, url, to_mp3=False, output_folder=output_folder))
