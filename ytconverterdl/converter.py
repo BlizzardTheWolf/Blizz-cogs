@@ -21,7 +21,7 @@ class ConverterCog(commands.Cog):
 
             # Resize the video and adjust the bitrate
             resized_clip = video_clip.resize(height=720)
-            resized_clip = resized_clip.set_audio(resized_clip.audio.set_bitrate(str(target_bitrate) + 'bit'))
+            resized_clip = resized_clip.set_audio(resized_clip.audio.set_audio_params(bitrate=target_bitrate))
 
             # Write the resized video to the output path
             resized_clip.write_videofile(str(output_path), codec="libx264", audio_codec="aac", temp_audiofile="temp-audio.m4a", remove_temp=True, threads=4)
@@ -60,10 +60,10 @@ class ConverterCog(commands.Cog):
 
             file_size = renamed_file_path.stat().st_size
 
-            if max_size_mb is not None and file_size > int(max_size_mb) * 1024 * 1024:
+            if max_size_mb is not None and file_size > max_size_mb * 1024 * 1024:
                 await conversion_message.edit(content=f"`Transcoding to your specified size...`")
                 # Resize the video to meet the size requirement
-                await self.resize_video(renamed_file_path, renamed_file_path, int(max_size_mb) * 1024 * 1024)
+                await self.resize_video(renamed_file_path, renamed_file_path, max_size_mb * 1024 * 1024)
 
             await conversion_message.edit(content=f"`Uploading...`")
             # Send a new message with the converted file
