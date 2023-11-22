@@ -17,6 +17,14 @@ class ConverterCog(commands.Cog):
             ydl_opts = {
                 'format': 'bestaudio/best' if to_mp3 else 'bestvideo[ext=mp4]+bestaudio/best',
                 'outtmpl': str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}"),
+                'postprocessors': [{
+                    'key': 'FFmpegVideoConvertor',
+                    'preferedformat': 'mp4',
+                }],
+                'videoformat': 'mp4',
+                'audioformat': 'mp3' if to_mp3 else 'best',
+                'audioquality': '128k' if to_mp3 else '0',  # Adjust audio quality as needed
+                'videobitrate': '512k',  # Adjust video bitrate as needed
             }
 
             user = ctx.message.author
