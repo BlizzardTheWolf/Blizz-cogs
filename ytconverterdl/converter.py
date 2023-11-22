@@ -38,6 +38,9 @@ class ConverterCog(commands.Cog):
 
                 downloaded_file_path.rename(renamed_file_path)
 
+                # Ensure the file has the correct extension
+                renamed_file_path = renamed_file_path.with_suffix(f".{'mp3' if to_mp3 else 'mp4'}")
+
                 await ctx.send(f'{user.mention}, your video conversion to {"MP3" if to_mp3 else "MP4"} is complete. Here is the converted file:',
                                file=discord.File(str(renamed_file_path)))
 
