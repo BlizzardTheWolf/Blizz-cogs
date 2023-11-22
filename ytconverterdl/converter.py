@@ -19,7 +19,7 @@ class ConverterCog(commands.Cog):
                 'outtmpl': str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}"),
             }
 
-            async with ctx.typing():
+            async with ctx.channel.typing():
                 with YoutubeDL(ydl_opts) as ydl:
                     info_dict = ydl.extract_info(url, download=False)
 
