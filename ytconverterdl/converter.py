@@ -38,13 +38,13 @@ class ConverterCog(commands.Cog):
 
                 downloaded_file_path.rename(renamed_file_path)
 
-            await ctx.send(f'{user.mention}, your video conversion to {"MP3" if to_mp3 else "MP4"} is complete. Here is the converted file:',
-                           file=discord.File(str(renamed_file_path)))
+                await ctx.send(f'{user.mention}, your video conversion to {"MP3" if to_mp3 else "MP4"} is complete. Here is the converted file:',
+                               file=discord.File(str(renamed_file_path)))
 
-            # Remove the file after 10 minutes if it exists
-            await asyncio.sleep(600)
-            if renamed_file_path.exists():
-                renamed_file_path.unlink()
+                # Remove the file after 10 minutes if it exists
+                await asyncio.sleep(600)
+                if renamed_file_path.exists():
+                    renamed_file_path.unlink()
 
         except Exception as e:
             error_message = str(e)
