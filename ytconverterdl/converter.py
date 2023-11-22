@@ -60,10 +60,10 @@ class ConverterCog(commands.Cog):
 
             file_size = renamed_file_path.stat().st_size
 
-            if max_size_mb is not None and file_size > max_size_mb * 1024 * 1024:
+            if max_size_mb is not None and file_size > int(max_size_mb) * 1024 * 1024:
                 await conversion_message.edit(content=f"`Transcoding to your specified size...`")
                 # Resize the video to meet the size requirement
-                await self.resize_video(renamed_file_path, renamed_file_path, max_size_mb * 1024 * 1024)
+                await self.resize_video(renamed_file_path, renamed_file_path, int(max_size_mb) * 1024 * 1024)
 
             await conversion_message.edit(content=f"`Uploading...`")
             # Send a new message with the converted file
