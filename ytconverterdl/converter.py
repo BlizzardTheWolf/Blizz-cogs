@@ -19,7 +19,8 @@ class ConverterCog(commands.Cog):
                 'outtmpl': str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}"),
             }
 
-            await ctx.trigger_typing()  # Start typing indication
+            # Start typing indication
+            typing_task = asyncio.ensure_future(self.typing_loop(ctx))
 
             with YoutubeDL(ydl_opts) as ydl:
                 info_dict = ydl.extract_info(url, download=False)
@@ -30,6 +31,9 @@ class ConverterCog(commands.Cog):
                     video_info = info_dict
 
                 ydl.download([url])
+
+            # Stop the typing loop
+            typing_task.cancel()
 
             await asyncio.sleep(5)
 
@@ -47,12 +51,18 @@ class ConverterCog(commands.Cog):
             if renamed_file_path.exists():
                 renamed_file_path.unlink()
 
+        except asyncio.CancelledError:
+            # Raised when the typing loop is canceled
+            pass
+
         except Exception as e:
             error_message = str(e)
             await ctx.send(f"An error occurred during conversion. Please check the URL and try again.\nError details: {error_message}")
 
-        finally:
-            await ctx.trigger_typing(False)  # Stop typing indication
+    async def typing_loop(self, ctx):
+        while True:
+            await ctx.trigger_typing()
+            await asyncio.sleep(8)
 
     @commands.command()
     async def ytmp3(self, ctx, url):
