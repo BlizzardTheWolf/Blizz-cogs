@@ -19,29 +19,24 @@ class ConverterCog(commands.Cog):
                 'outtmpl': str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}"),
             }
 
-            # Start typing indication
-            typing_task = asyncio.ensure_future(self.typing_loop(ctx))
+            async with ctx.typing():
+                with YoutubeDL(ydl_opts) as ydl:
+                    info_dict = ydl.extract_info(url, download=False)
 
-            with YoutubeDL(ydl_opts) as ydl:
-                info_dict = ydl.extract_info(url, download=False)
+                    if 'entries' in info_dict:
+                        video_info = info_dict['entries'][0]
+                    else:
+                        video_info = info_dict
 
-                if 'entries' in info_dict:
-                    video_info = info_dict['entries'][0]
-                else:
-                    video_info = info_dict
+                    ydl.download([url])
 
-                ydl.download([url])
+                await asyncio.sleep(5)
 
-            # Stop the typing loop
-            typing_task.cancel()
+                user = ctx.message.author
+                downloaded_file_path = output_folder / f"{video_info['id']}.{'mp3' if to_mp3 else 'webm'}"
+                renamed_file_path = output_folder / f"{video_info['id']}.{'mp3' if to_mp3 else 'mp4'}"
 
-            await asyncio.sleep(5)
-
-            user = ctx.message.author
-            downloaded_file_path = output_folder / f"{video_info['id']}.{'mp3' if to_mp3 else 'webm'}"
-            renamed_file_path = output_folder / f"{video_info['id']}.{'mp3' if to_mp3 else 'mp4'}"
-
-            downloaded_file_path.rename(renamed_file_path)
+                downloaded_file_path.rename(renamed_file_path)
 
             await ctx.send(f'{user.mention}, your video conversion to {"MP3" if to_mp3 else "MP4"} is complete. Here is the converted file:',
                            file=discord.File(str(renamed_file_path)))
@@ -51,18 +46,9 @@ class ConverterCog(commands.Cog):
             if renamed_file_path.exists():
                 renamed_file_path.unlink()
 
-        except asyncio.CancelledError:
-            # Raised when the typing loop is canceled
-            pass
-
         except Exception as e:
             error_message = str(e)
             await ctx.send(f"An error occurred during conversion. Please check the URL and try again.\nError details: {error_message}")
-
-    async def typing_loop(self, ctx):
-        while True:
-            await ctx.trigger_typing()
-            await asyncio.sleep(8)
 
     @commands.command()
     async def ytmp3(self, ctx, url):
