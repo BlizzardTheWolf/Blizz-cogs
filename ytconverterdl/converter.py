@@ -17,9 +17,15 @@ class ConverterCog(commands.Cog):
             ydl_opts = {
                 'format': 'bestvideo[ext=mp4]+bestaudio/best',
                 'outtmpl': str(output_folder / f"%(id)s.mp4"),
+                'postprocessors': [{
+                    'key': 'FFmpegVideoConvertor',
+                    'preferedformat': 'mp4',
+                    'preferedquality': 'highest',
+                    'max_filesize': max_size_mb * 1024 * 1024,  # Limit file size during conversion
+                }],
             }
 
-            conversion_message = await ctx.send(f"`Your video is being converted...`")  # Notify that the video is being converted
+            conversion_message = await ctx.send(f"`Your video is being converted...`")
 
             with YoutubeDL(ydl_opts) as ydl:
                 info_dict = ydl.extract_info(url, download=False)
@@ -36,21 +42,14 @@ class ConverterCog(commands.Cog):
             user = ctx.message.author
             downloaded_file_path = output_folder / f"{video_info['id']}.mp4"
 
-            file_size = downloaded_file_path.stat().st_size  # Get file size in bytes
+            await conversion_message.edit(content=f"`Your video conversion to MP4 is complete. Uploading...`")
+            await ctx.send(f'`Here is the converted file:`',
+                           file=discord.File(str(downloaded_file_path)))
 
-            if file_size <= max_size_mb * 1024 * 1024:  # Check if file size is less than or equal to the specified limit
-                await conversion_message.edit(content=f"`Your video conversion to MP4 is complete. Uploading...`")
-                # Send a new message with the converted file
-                await ctx.send(f'`Here is the converted file:`',
-                               file=discord.File(str(downloaded_file_path)))
-            else:
-                # If the file size exceeds the limit, inform the user about the size
-                await ctx.send(f"`The converted file is too large to send ({file_size / (1024 * 1024):.2f} MB). "
-                               f"Discord has a file size limit of {max_size_mb} MB for regular users. "
-                               f"If you need to send larger files, consider boosting the server for a higher limit.`")
-                # Remove the file after 10 minutes if it exists
-                if downloaded_file_path.exists():
-                    downloaded_file_path.unlink()
+            # Remove the file after 10 minutes if it exists
+            await asyncio.sleep(600)
+            if downloaded_file_path.exists():
+                downloaded_file_path.unlink()
 
         except Exception as e:
             error_message = str(e)
