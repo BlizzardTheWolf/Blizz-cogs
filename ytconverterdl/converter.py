@@ -15,8 +15,9 @@ class ConverterCog(commands.Cog):
             output_folder = self.data_folder / ("mp3" if to_mp3 else "mp4")
 
             ydl_opts = {
-                'format': 'bestaudio/best' if to_mp3 else f'bestvideo[ext=mp4, height={resolution}]+bestaudio/best',
+                'format': 'bestaudio/best' if to_mp3 else 'bestvideo+bestaudio/best',
                 'outtmpl': str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}"),
+                'video_format': f'best[height<={resolution}]',
             }
 
             conversion_message = await ctx.send(f"`Your video is being converted...`")
