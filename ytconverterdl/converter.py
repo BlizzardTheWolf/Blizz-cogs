@@ -45,13 +45,11 @@ class ConverterCog(commands.Cog):
                 await ctx.send(f'`Here is the converted file:`',
                                file=discord.File(str(renamed_file_path)))
             else:
-                # If the file size exceeds the limit, inform the user
-                await ctx.send(f"`The converted file is too large ({file_size / (1024 * 1024):.2f} MB). Please try with a smaller video.`")
-
-            # Remove the file after 10 minutes if it exists
-            await asyncio.sleep(600)
-            if renamed_file_path.exists():
-                renamed_file_path.unlink()
+                # If the file size exceeds the limit, inform the user about the size
+                await ctx.send(f"`The converted file is too large to send ({file_size / (1024 * 1024):.2f} MB). Please try with a smaller video.`")
+                # Remove the file after 10 minutes if it exists
+                if renamed_file_path.exists():
+                    renamed_file_path.unlink()
 
         except Exception as e:
             error_message = str(e)
