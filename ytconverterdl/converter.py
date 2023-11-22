@@ -21,10 +21,6 @@ class ConverterCog(commands.Cog):
                     'key': 'FFmpegVideoConvertor',
                     'preferedformat': 'mp4',
                 }],
-                'videoformat': 'mp4',
-                'audioformat': 'mp3' if to_mp3 else 'best',
-                'audioquality': '128k' if to_mp3 else '0',  # Adjust audio quality as needed
-                'videobitrate': '512k',  # Adjust video bitrate as needed
             }
 
             user = ctx.message.author
@@ -45,22 +41,26 @@ class ConverterCog(commands.Cog):
             downloaded_file_path = output_folder / f"{video_info['id']}.{'mp3' if to_mp3 else 'webm'}"
             renamed_file_path = output_folder / f"{video_info['id']}.{'mp3' if to_mp3 else 'mp4'}"
 
-            downloaded_file_path.rename(renamed_file_path)
+            # Check if the downloaded file exists before attempting to rename
+            if downloaded_file_path.exists():
+                downloaded_file_path.rename(renamed_file_path)
 
-            # Ensure the file has the correct extension
-            renamed_file_path = renamed_file_path.with_suffix(f".{'mp3' if to_mp3 else 'mp4'}")
+                # Ensure the file has the correct extension
+                renamed_file_path = renamed_file_path.with_suffix(f".{'mp3' if to_mp3 else 'mp4'}")
 
-            # Edit the previous message to indicate uploading
-            await message.edit(content="`Conversion complete. Uploading...`")
+                # Edit the previous message to indicate uploading
+                await message.edit(content="`Conversion complete. Uploading...`")
 
-            # Send a new message with the converted file
-            await ctx.send(f'`Here is the converted file:`',
-                           file=discord.File(str(renamed_file_path)))
+                # Send a new message with the converted file
+                await ctx.send(f'`Here is the converted file:`',
+                               file=discord.File(str(renamed_file_path)))
 
-            # Remove the file after 10 minutes if it exists
-            await asyncio.sleep(600)
-            if renamed_file_path.exists():
-                renamed_file_path.unlink()
+                # Remove the file after 10 minutes if it exists
+                await asyncio.sleep(600)
+                if renamed_file_path.exists():
+                    renamed_file_path.unlink()
+            else:
+                await ctx.send("`The converted file could not be found. Please try again.`")
 
         except Exception as e:
             error_message = str(e)
