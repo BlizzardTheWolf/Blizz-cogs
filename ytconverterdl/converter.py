@@ -19,7 +19,7 @@ class ConverterCog(commands.Cog):
                 'outtmpl': str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}"),
             }
 
-            conversion_message = await ctx.send(f"`Your video is being converted...`")
+            conversion_message = await ctx.send(f"`Converting video...`")
 
             with YoutubeDL(ydl_opts) as ydl:
                 info_dict = ydl.extract_info(url, download=False)
@@ -41,10 +41,11 @@ class ConverterCog(commands.Cog):
 
             # Try uploading the file
             try:
-                # Send a new message with the converted file
-                await ctx.send(f'`Here is the converted file:`',
+                await conversion_message.edit(content=f"`Uploading video...`")
+                # Send a new message with the converted file, mentioning the user
+                await ctx.send(f'{user.mention}, `Here is the converted video:`',
                                file=discord.File(str(renamed_file_path)))
-                await conversion_message.edit(content=f"`Your video conversion to {'MP3' if to_mp3 else 'MP4'} is complete.`")
+                await conversion_message.edit(content=f"`Video uploaded successfully.`")
             except discord.errors.HTTPException as upload_error:
                 # If uploading fails, send an error message
                 await ctx.send(f"`An error occurred during upload. Please check the file and try again.\nError details: {upload_error}`")
