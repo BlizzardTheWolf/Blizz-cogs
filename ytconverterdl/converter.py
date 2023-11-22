@@ -4,23 +4,29 @@ from yt_dlp import YoutubeDL
 import asyncio
 from redbot.core import data_manager
 from pathlib import Path
-import subprocess
+from moviepy.editor import VideoFileClip
 
 class ConverterCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.data_folder = data_manager.cog_data_path(cog_instance=self)
 
-    async def transcode_video(self, input_path, output_path, max_size_bytes):
+    async def resize_video(self, input_path, output_path, target_size_bytes):
         try:
-            # Use FFmpeg to transcode the video to the required size
-            subprocess.run(['ffmpeg', '-i', str(input_path), '-b:v', '500k', '-maxrate', '500k', '-bufsize', '1000k', '-c:a', 'copy', str(output_path)], check=True)
+            # Load the video clip
+            video_clip = VideoFileClip(str(input_path))
 
-            # Check if the transcoded file size is within the limit
-            if output_path.stat().st_size > max_size_bytes:
-                raise ValueError(f"File size exceeds the limit ({max_size_bytes / (1024 * 1024):.2f} MB).")
-        except subprocess.CalledProcessError as e:
-            raise ValueError(f"Error during video transcoding: {e}")
+            # Resize the video to meet the size requirement
+            resized_clip = video_clip.resize(height=720)
+
+            # Write the resized video to the output path
+            resized_clip.write_videofile(str(output_path), codec="libx264", audio_codec="aac", temp_audiofile="temp-audio.m4a", remove_temp=True, threads=4)
+
+            # Check if the resized file size is within the limit
+            if output_path.stat().st_size > target_size_bytes:
+                raise ValueError(f"File size exceeds the limit ({target_size_bytes / (1024 * 1024):.2f} MB).")
+        except Exception as e:
+            raise ValueError(f"Error during video resizing: {e}")
 
     async def download_and_convert(self, ctx, url, to_mp3=False, max_size_mb=8):
         try:
@@ -55,8 +61,8 @@ class ConverterCog(commands.Cog):
 
             if file_size <= 8000000:
                 await conversion_message.edit(content=f"`Uploading...`")
-                # Transcode the video to meet the size requirement
-                await self.transcode_video(renamed_file_path, renamed_file_path, max_size_mb * 1024 * 1024)
+                # Resize the video to meet the size requirement
+                await self.resize_video(renamed_file_path, renamed_file_path, max_size_mb * 1024 * 1024)
                 # Send a new message with the converted file
                 await ctx.send(f'`Done`', file=discord.File(str(renamed_file_path)))
             else:
