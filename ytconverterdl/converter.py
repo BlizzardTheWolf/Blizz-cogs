@@ -17,13 +17,10 @@ class ConverterCog(commands.Cog):
             ydl_opts = {
                 'format': 'bestaudio/best' if to_mp3 else 'bestvideo[ext=mp4]+bestaudio/best',
                 'outtmpl': str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}"),
-                'postprocessors': [{
-                    'key': 'FFmpegVideoConvertor',
-                    'preferedformat': 'mp4',
-                }],
             }
 
-            async with ctx.typing():
+            user = ctx.message.author
+            async with ctx.channel.typing():
                 with YoutubeDL(ydl_opts) as ydl:
                     info_dict = ydl.extract_info(url, download=False)
 
@@ -36,7 +33,6 @@ class ConverterCog(commands.Cog):
 
                 await asyncio.sleep(5)
 
-                user = ctx.message.author
                 downloaded_file_path = output_folder / f"{video_info['id']}.{'mp3' if to_mp3 else 'webm'}"
                 renamed_file_path = output_folder / f"{video_info['id']}.{'mp3' if to_mp3 else 'mp4'}"
 
@@ -45,13 +41,17 @@ class ConverterCog(commands.Cog):
                 # Ensure the file has the correct extension
                 renamed_file_path = renamed_file_path.with_suffix(f".{'mp3' if to_mp3 else 'mp4'}")
 
-                await ctx.send(f'{user.mention}, your video conversion to {"MP3" if to_mp3 else "MP4"} is complete. Here is the converted file:',
-                               file=discord.File(str(renamed_file_path)))
+            # Send message with file
+            conversion_message = await ctx.send(f'{user.mention}, your video conversion to {"MP3" if to_mp3 else "MP4"} is complete. Here is the converted file:',
+                                                file=discord.File(str(renamed_file_path)))
 
-                # Remove the file after 10 minutes if it exists
-                await asyncio.sleep(600)
-                if renamed_file_path.exists():
-                    renamed_file_path.unlink()
+            # Remove the file after 10 minutes if it exists
+            await asyncio.sleep(600)
+            if renamed_file_path.exists():
+                renamed_file_path.unlink()
+
+            # Stop typing indication after sending the message
+            await ctx.channel.trigger_typing()
 
         except Exception as e:
             error_message = str(e)
