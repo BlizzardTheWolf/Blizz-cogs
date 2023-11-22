@@ -17,14 +17,7 @@ class ConverterCog(commands.Cog):
             ydl_opts = {
                 'format': 'bestaudio/best' if to_mp3 else 'bestvideo[ext=mp4]+bestaudio/best',
                 'outtmpl': str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}"),
-                'postprocessors': [{
-                    'key': 'FFmpegVideoConvertor',
-                    'preferedformat': 'mp4',
-                }],
             }
-
-            user = ctx.message.author
-            message = await ctx.send(f"`Your video is being converted...`")
 
             with YoutubeDL(ydl_opts) as ydl:
                 info_dict = ydl.extract_info(url, download=False)
@@ -38,29 +31,22 @@ class ConverterCog(commands.Cog):
 
             await asyncio.sleep(5)
 
+            user = ctx.message.author
             downloaded_file_path = output_folder / f"{video_info['id']}.{'mp3' if to_mp3 else 'webm'}"
             renamed_file_path = output_folder / f"{video_info['id']}.{'mp3' if to_mp3 else 'mp4'}"
 
-            # Check if the downloaded file exists before attempting to rename
-            if downloaded_file_path.exists():
-                downloaded_file_path.rename(renamed_file_path)
+            downloaded_file_path.rename(renamed_file_path)
 
-                # Ensure the file has the correct extension
-                renamed_file_path = renamed_file_path.with_suffix(f".{'mp3' if to_mp3 else 'mp4'}")
+            await ctx.send(f"`Your video conversion to {'MP3' if to_mp3 else 'MP4'} is complete. Uploading...`")
 
-                # Edit the previous message to indicate uploading
-                await message.edit(content="`Conversion complete. Uploading...`")
+            # Send a new message with the converted file
+            await ctx.send(f'`Here is the converted file:`',
+                           file=discord.File(str(renamed_file_path)))
 
-                # Send a new message with the converted file
-                await ctx.send(f'`Here is the converted file:`',
-                               file=discord.File(str(renamed_file_path)))
-
-                # Remove the file after 10 minutes if it exists
-                await asyncio.sleep(600)
-                if renamed_file_path.exists():
-                    renamed_file_path.unlink()
-            else:
-                await ctx.send("`The converted file could not be found. Please try again.`")
+            # Remove the file after 10 minutes if it exists
+            await asyncio.sleep(600)
+            if renamed_file_path.exists():
+                renamed_file_path.unlink()
 
         except Exception as e:
             error_message = str(e)
