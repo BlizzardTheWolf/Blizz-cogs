@@ -21,7 +21,7 @@ class ConverterCog(commands.Cog):
 
             # Resize the video and adjust the bitrate
             resized_clip = video_clip.resize(height=720)
-            resized_clip = resized_clip.set_audio(resized_clip.audio.set_bitrate(target_bitrate))
+            resized_clip = resized_clip.set_audio(resized_clip.audio.set_bitrate(int(target_bitrate)))
 
             # Write the resized video to the output path
             resized_clip.write_videofile(str(output_path), codec="libx264", audio_codec="aac", temp_audiofile="temp-audio.m4a", remove_temp=True, threads=4)
