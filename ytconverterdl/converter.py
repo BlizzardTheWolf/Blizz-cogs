@@ -5,7 +5,6 @@ import asyncio
 from redbot.core import data_manager
 from pathlib import Path
 from moviepy.editor import VideoFileClip
-from moviepy.video.fx.all import resize
 
 class ConverterCog(commands.Cog):
     def __init__(self, bot):
@@ -24,11 +23,8 @@ class ConverterCog(commands.Cog):
             target_bitrate = int(target_size_bytes * 8 / video_clip.duration)
 
             # Resize the video with MoviePy
-            resized_clip = resize(video_clip, width=int(video_clip.w * 0.5), apply_to_mask=False)
-
-            # Set the audio bitrate
-            resized_clip = resized_clip.set_audio(resized_clip.audio.set_audio_params(bitrate=f"{target_bitrate}bit"))
-
+            resized_clip = video_clip.resize(height=720)
+            
             # Write the resized video to the output path
             resized_clip.write_videofile(str(output_path), codec="libx264", audio_codec="aac", temp_audiofile="temp-audio.m4a", remove_temp=True, threads=4)
 
