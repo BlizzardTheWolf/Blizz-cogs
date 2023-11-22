@@ -20,38 +20,39 @@ class ConverterCog(commands.Cog):
             }
 
             user = ctx.message.author
-            async with ctx.channel.typing():
-                with YoutubeDL(ydl_opts) as ydl:
-                    info_dict = ydl.extract_info(url, download=False)
+            message = await ctx.send(f"{user.mention}, your video is being converted...")
 
-                    if 'entries' in info_dict:
-                        video_info = info_dict['entries'][0]
-                    else:
-                        video_info = info_dict
+            with YoutubeDL(ydl_opts) as ydl:
+                info_dict = ydl.extract_info(url, download=False)
 
-                    ydl.download([url])
+                if 'entries' in info_dict:
+                    video_info = info_dict['entries'][0]
+                else:
+                    video_info = info_dict
 
-                await asyncio.sleep(5)
+                ydl.download([url])
 
-                downloaded_file_path = output_folder / f"{video_info['id']}.{'mp3' if to_mp3 else 'webm'}"
-                renamed_file_path = output_folder / f"{video_info['id']}.{'mp3' if to_mp3 else 'mp4'}"
+            await asyncio.sleep(5)
 
-                downloaded_file_path.rename(renamed_file_path)
+            downloaded_file_path = output_folder / f"{video_info['id']}.{'mp3' if to_mp3 else 'webm'}"
+            renamed_file_path = output_folder / f"{video_info['id']}.{'mp3' if to_mp3 else 'mp4'}"
 
-                # Ensure the file has the correct extension
-                renamed_file_path = renamed_file_path.with_suffix(f".{'mp3' if to_mp3 else 'mp4'}")
+            downloaded_file_path.rename(renamed_file_path)
 
-            # Send message with file
-            conversion_message = await ctx.send(f'{user.mention}, your video conversion to {"MP3" if to_mp3 else "MP4"} is complete. Here is the converted file:',
-                                                file=discord.File(str(renamed_file_path)))
+            # Ensure the file has the correct extension
+            renamed_file_path = renamed_file_path.with_suffix(f".{'mp3' if to_mp3 else 'mp4'}")
+
+            # Edit the previous message to indicate uploading
+            await message.edit(content=f"{user.mention}, your video conversion is complete. Uploading...")
+
+            # Send a new message with the converted file
+            await ctx.send(f'{user.mention}, here is the converted file:',
+                           file=discord.File(str(renamed_file_path)))
 
             # Remove the file after 10 minutes if it exists
             await asyncio.sleep(600)
             if renamed_file_path.exists():
                 renamed_file_path.unlink()
-
-            # Stop typing indication after sending the message
-            await ctx.channel.trigger_typing()
 
         except Exception as e:
             error_message = str(e)
