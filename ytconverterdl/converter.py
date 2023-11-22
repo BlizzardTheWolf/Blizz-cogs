@@ -4,7 +4,7 @@ from yt_dlp import YoutubeDL
 import asyncio
 from redbot.core import data_manager
 from pathlib import Path
-import subprocess
+from moviepy.editor import VideoFileClip
 
 class ConverterCog(commands.Cog):
     def __init__(self, bot):
@@ -13,8 +13,28 @@ class ConverterCog(commands.Cog):
 
     async def resize_video(self, input_path, output_path, target_size_mb):
         try:
-            # Run FFmpeg to resize and adjust bitrate
-            subprocess.run(['ffmpeg', '-i', str(input_path), '-vf', 'scale=-2:720', '-b:v', f'{target_size_mb}M', '-maxrate', f'{target_size_mb}M', '-bufsize', f'{2*target_size_mb}M', '-c:a', 'aac', '-c:v', 'libx264', str(output_path)])
+            # Load the video clip
+            video_clip = VideoFileClip(str(input_path))
+
+            # Set default resolution to 720p
+            target_resolution = (1280, 720)
+
+            # Calculate the bitrate to achieve the target size
+            target_bitrate = int(target_size_mb * 8 / video_clip.duration)
+
+            # Resize the video and adjust the bitrate
+            resized_clip = video_clip.resize(height=target_resolution[1])
+            resized_clip = resized_clip.set_audio(resized_clip.audio.set_audio_params(bitrate=f"{target_bitrate}bit"))
+
+            # Write the resized video to the output path
+            resized_clip.write_videofile(
+                str(output_path),
+                codec="libx264",
+                audio_codec="aac",
+                temp_audiofile="temp-audio.m4a",
+                remove_temp=True,
+                threads=4,
+            )
 
         except Exception as e:
             raise ValueError(f"Error during video resizing: {e}")
@@ -34,6 +54,14 @@ class ConverterCog(commands.Cog):
                 info_dict = ydl.extract_info(url, download=False)
 
                 if 'entries' in info_dict:
+                    # Set default quality to 720p
+                    available_formats = [f for f in info_dict['entries'][0]['formats'] if f['height'] == 720]
+                    if not available_formats:
+                        # If 720p is not available, choose the highest resolution
+                        available_formats = sorted(info_dict['entries'][0]['formats'], key=lambda x: x['height'], reverse=True)
+
+                    ydl_opts['format'] = available_formats[0]['format_id']
+
                     video_info = info_dict['entries'][0]
                 else:
                     video_info = info_dict
@@ -86,10 +114,4 @@ class ConverterCog(commands.Cog):
     @commands.command()
     async def ytmp4(self, ctx, url, max_size_mb=None):
         """
-        Converts a YouTube video to MP4.
-
-        Parameters:
-        `<url>` The URL of the video you want to convert.
-        `[max_size_mb]` The maximum size in megabytes for the converted video (optional).
-        """
-        await self.download_and_convert(ctx, url, to_mp3=False, max_size_mb=max_size_mb)
+       
