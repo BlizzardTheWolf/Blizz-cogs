@@ -16,15 +16,12 @@ class ConverterCog(commands.Cog):
             # Load the video clip
             video_clip = VideoFileClip(str(input_path))
 
-            # Set the limit for integer string conversion
-            sys.set_int_max_str_digits(20)
-
             # Calculate the bitrate to achieve the target size
             target_bitrate = int(target_size_bytes * 8 / video_clip.duration)
 
             # Resize the video and adjust the bitrate
             resized_clip = video_clip.resize(height=720)
-            resized_clip = resized_clip.set_audio(resized_clip.audio.set_audio_params(bitrate=f"{target_bitrate}bit"))
+            resized_clip = resized_clip.set_audio(resized_clip.audio.set_bitrate(str(target_bitrate) + 'bit'))
 
             # Write the resized video to the output path
             resized_clip.write_videofile(str(output_path), codec="libx264", audio_codec="aac", temp_audiofile="temp-audio.m4a", remove_temp=True, threads=4)
