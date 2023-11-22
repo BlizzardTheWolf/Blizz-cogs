@@ -30,7 +30,7 @@ class ConverterCog(commands.Cog):
             output_folder = self.data_folder / ("mp3" if to_mp3 else "mp4")
 
             ydl_opts = {
-                'format': 'bestaudio/best' if to_mp3 else 'bestvideo[ext=mp4]+bestaudio/best',
+                'format': 'bestvideo[height<=720]+bestaudio/best' if not to_mp3 else 'bestaudio/best',
                 'outtmpl': str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}"),
             }
 
