@@ -10,14 +10,13 @@ class ConverterCog(commands.Cog):
         self.bot = bot
         self.data_folder = data_manager.cog_data_path(cog_instance=self)
 
-    async def download_and_convert(self, ctx, url, resolution='720', to_mp3=False):
+    async def download_and_convert(self, ctx, url, to_mp3=False):
         try:
             output_folder = self.data_folder / ("mp3" if to_mp3 else "mp4")
 
             ydl_opts = {
                 'format': 'bestaudio/best' if to_mp3 else 'bestvideo+bestaudio/best',
                 'outtmpl': str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}"),
-                'video_format': f'best[height<={resolution}]',
             }
 
             conversion_message = await ctx.send(f"`Your video is being converted...`")
@@ -71,12 +70,11 @@ class ConverterCog(commands.Cog):
         await self.download_and_convert(ctx, url, to_mp3=True)
 
     @commands.command()
-    async def ytmp4(self, ctx, url, resolution='720'):
+    async def ytmp4(self, ctx, url):
         """
-        Converts a YouTube video to MP4 with optional resolution.
+        Converts a YouTube video to MP4.
 
         Parameters:
         `<url>` The URL of the video you want to convert.
-        `[resolution]` The desired resolution (e.g., 320, 720, 1080). Default is 720.
         """
-        await self.download_and_convert(ctx, url, resolution=resolution, to_mp3=False)
+        await self.download_and_convert(ctx, url, to_mp3=False)
