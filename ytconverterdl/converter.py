@@ -19,24 +19,25 @@ class ConverterCog(commands.Cog):
                 'outtmpl': str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}"),
             }
 
-            async with ctx.typing():
-                with YoutubeDL(ydl_opts) as ydl:
-                    info_dict = ydl.extract_info(url, download=False)
+            await ctx.trigger_typing()  # Start typing indication
 
-                    if 'entries' in info_dict:
-                        video_info = info_dict['entries'][0]
-                    else:
-                        video_info = info_dict
+            with YoutubeDL(ydl_opts) as ydl:
+                info_dict = ydl.extract_info(url, download=False)
 
-                    ydl.download([url])
+                if 'entries' in info_dict:
+                    video_info = info_dict['entries'][0]
+                else:
+                    video_info = info_dict
 
-                await asyncio.sleep(5)
+                ydl.download([url])
 
-                user = ctx.message.author
-                downloaded_file_path = output_folder / f"{video_info['id']}.{'mp3' if to_mp3 else 'webm'}"
-                renamed_file_path = output_folder / f"{video_info['id']}.{'mp3' if to_mp3 else 'mp4'}"
+            await asyncio.sleep(5)
 
-                downloaded_file_path.rename(renamed_file_path)
+            user = ctx.message.author
+            downloaded_file_path = output_folder / f"{video_info['id']}.{'mp3' if to_mp3 else 'webm'}"
+            renamed_file_path = output_folder / f"{video_info['id']}.{'mp3' if to_mp3 else 'mp4'}"
+
+            downloaded_file_path.rename(renamed_file_path)
 
             await ctx.send(f'{user.mention}, your video conversion to {"MP3" if to_mp3 else "MP4"} is complete. Here is the converted file:',
                            file=discord.File(str(renamed_file_path)))
@@ -49,6 +50,9 @@ class ConverterCog(commands.Cog):
         except Exception as e:
             error_message = str(e)
             await ctx.send(f"An error occurred during conversion. Please check the URL and try again.\nError details: {error_message}")
+
+        finally:
+            await ctx.trigger_typing(False)  # Stop typing indication
 
     @commands.command()
     async def ytmp3(self, ctx, url):
