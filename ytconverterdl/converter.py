@@ -20,7 +20,7 @@ class ConverterCog(commands.Cog):
             }
 
             user = ctx.message.author
-            message = await ctx.send(f"{user.mention}, your video is being converted...")
+            message = await ctx.send(f"`Your video is being converted...`")
 
             with YoutubeDL(ydl_opts) as ydl:
                 info_dict = ydl.extract_info(url, download=False)
@@ -43,10 +43,10 @@ class ConverterCog(commands.Cog):
             renamed_file_path = renamed_file_path.with_suffix(f".{'mp3' if to_mp3 else 'mp4'}")
 
             # Edit the previous message to indicate uploading
-            await message.edit(content=f"{user.mention}, your video conversion is complete. Uploading...")
+            await message.edit(content="`Conversion complete. Uploading...`")
 
             # Send a new message with the converted file
-            await ctx.send(f'{user.mention}, here is the converted file:',
+            await ctx.send(f'`Here is the converted file:`',
                            file=discord.File(str(renamed_file_path)))
 
             # Remove the file after 10 minutes if it exists
@@ -56,7 +56,7 @@ class ConverterCog(commands.Cog):
 
         except Exception as e:
             error_message = str(e)
-            await ctx.send(f"An error occurred during conversion. Please check the URL and try again.\nError details: {error_message}")
+            await ctx.send(f"`An error occurred during conversion. Please check the URL and try again.\nError details: {error_message}`")
 
     @commands.command()
     async def ytmp3(self, ctx, url):
