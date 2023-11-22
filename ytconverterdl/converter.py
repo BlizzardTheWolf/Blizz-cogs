@@ -4,8 +4,7 @@ from yt_dlp import YoutubeDL
 import asyncio
 from redbot.core import data_manager
 from pathlib import Path
-from moviepy.editor import VideoFileClip
-import tempfile
+from moviepy.editor import VideoFileClip, sys
 
 class ConverterCog(commands.Cog):
     def __init__(self, bot):
@@ -17,20 +16,18 @@ class ConverterCog(commands.Cog):
             # Load the video clip
             video_clip = VideoFileClip(str(input_path))
 
-            # Convert target_size_bytes to int
-            target_size_bytes = int(target_size_bytes)
+            # Set the limit for integer string conversion
+            sys.set_int_max_str_digits(20)
 
             # Calculate the bitrate to achieve the target size
             target_bitrate = int(target_size_bytes * 8 / video_clip.duration)
 
-            # Resize the video with MoviePy
+            # Resize the video and adjust the bitrate
             resized_clip = video_clip.resize(height=720)
-
-            # Use the system's temporary directory for the audio file
-            temp_audiofile = str(Path(tempfile.gettempdir()) / "temp-audio.m4a")
+            resized_clip = resized_clip.set_audio(resized_clip.audio.set_audio_params(bitrate=f"{target_bitrate}bit"))
 
             # Write the resized video to the output path
-            resized_clip.write_videofile(str(output_path), codec="libx264", audio_codec="aac", temp_audiofile=temp_audiofile, remove_temp=True, threads=4)
+            resized_clip.write_videofile(str(output_path), codec="libx264", audio_codec="aac", temp_audiofile="temp-audio.m4a", remove_temp=True, threads=4)
 
         except Exception as e:
             raise ValueError(f"Error during video resizing: {e}")
@@ -66,7 +63,7 @@ class ConverterCog(commands.Cog):
 
             file_size = renamed_file_path.stat().st_size
 
-            if max_size_mb is not None and file_size > int(max_size_mb) * 1024 * 1024:
+            if max_size_mb is not None and file_size > max_size_mb * 1024 * 1024:
                 await conversion_message.edit(content=f"`Transcoding to your specified size...`")
                 # Resize the video to meet the size requirement
                 await self.resize_video(renamed_file_path, renamed_file_path, max_size_mb * 1024 * 1024)
