@@ -4,13 +4,14 @@ from yt_dlp import YoutubeDL
 import asyncio
 from redbot.core import data_manager
 from pathlib import Path
+import subprocess
 
 class ConverterCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.data_folder = data_manager.cog_data_path(cog_instance=self)
 
-    async def download_and_convert(self, ctx, url, to_mp3=False):
+    async def download_and_convert(self, ctx, url, to_mp3=False, max_size_mb=None):
         try:
             output_folder = self.data_folder / ("mp3" if to_mp3 else "mp4")
 
@@ -39,6 +40,16 @@ class ConverterCog(commands.Cog):
 
             downloaded_file_path.rename(renamed_file_path)
 
+            # Check if the file size exceeds the limit
+            file_size = renamed_file_path.stat().st_size  # Get file size in bytes
+            if max_size_mb and file_size > max_size_mb * 1024 * 1024:
+                # If the file size exceeds the limit, transcode the video to a lower size using ffmpeg
+                await conversion_message.edit(content=f"`Reducing video size...`")
+                transcoded_file_path = output_folder / f"{video_info['id']}_transcoded.{'mp3' if to_mp3 else 'mp4'}"
+                subprocess.run(['ffmpeg', '-i', str(renamed_file_path), '-b', '1000k', str(transcoded_file_path)])
+                renamed_file_path.unlink()
+                renamed_file_path = transcoded_file_path
+
             # Try uploading the file
             try:
                 await conversion_message.edit(content=f"`Uploading video...`")
@@ -59,21 +70,23 @@ class ConverterCog(commands.Cog):
             await ctx.send(f"`An error occurred during conversion. Please check the URL and try again.\nError details: {error_message}`")
 
     @commands.command()
-    async def ytmp3(self, ctx, url):
+    async def ytmp3(self, ctx, url, max_size_mb=None):
         """
         Converts a YouTube video to MP3.
 
         Parameters:
         `<url>` The URL of the video you want to convert.
+        `[max_size_mb]` (Optional) The maximum size of the converted file in megabytes.
         """
-        await self.download_and_convert(ctx, url, to_mp3=True)
+        await self.download_and_convert(ctx, url, to_mp3=True, max_size_mb=max_size_mb)
 
     @commands.command()
-    async def ytmp4(self, ctx, url):
+    async def ytmp4(self, ctx, url, max_size_mb=None):
         """
         Converts a YouTube video to MP4.
 
         Parameters:
         `<url>` The URL of the video you want to convert.
+        `[max_size_mb]` (Optional) The maximum size of the converted file in megabytes.
         """
-        await self.download_and_convert(ctx, url, to_mp3=False)
+        await self.download_and_convert(ctx, url, to_mp3=False, max_size_mb=max_size_mb)
