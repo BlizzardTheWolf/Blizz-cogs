@@ -4,27 +4,17 @@ from yt_dlp import YoutubeDL
 import asyncio
 from redbot.core import data_manager
 from pathlib import Path
-from moviepy.editor import VideoFileClip
+import subprocess
 
 class ConverterCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.data_folder = data_manager.cog_data_path(cog_instance=self)
 
-    async def resize_video(self, input_path, output_path, target_size_bytes):
+    async def resize_video(self, input_path, output_path, target_size_mb):
         try:
-            # Load the video clip
-            video_clip = VideoFileClip(str(input_path))
-
-            # Calculate the bitrate to achieve the target size
-            target_bitrate = int(target_size_bytes * 8 / video_clip.duration)
-
-            # Resize the video and adjust the bitrate
-            resized_clip = video_clip.resize(height=720)
-            resized_clip = resized_clip.set_audio(resized_clip.audio.set_bitrate(int(target_bitrate)))
-
-            # Write the resized video to the output path
-            resized_clip.write_videofile(str(output_path), codec="libx264", audio_codec="aac", temp_audiofile="temp-audio.m4a", remove_temp=True, threads=4)
+            # Run FFmpeg to resize and adjust bitrate
+            subprocess.run(['ffmpeg', '-i', str(input_path), '-vf', 'scale=-2:720', '-b:v', f'{target_size_mb}M', '-maxrate', f'{target_size_mb}M', '-bufsize', f'{2*target_size_mb}M', '-c:a', 'aac', '-c:v', 'libx264', str(output_path)])
 
         except Exception as e:
             raise ValueError(f"Error during video resizing: {e}")
@@ -63,7 +53,7 @@ class ConverterCog(commands.Cog):
             if max_size_mb is not None and file_size > max_size_mb * 1024 * 1024:
                 await conversion_message.edit(content=f"`Transcoding to your specified size...`")
                 # Resize the video to meet the size requirement
-                await self.resize_video(renamed_file_path, renamed_file_path, max_size_mb * 1024 * 1024)
+                await self.resize_video(renamed_file_path, renamed_file_path, max_size_mb)
 
             await conversion_message.edit(content=f"`Uploading...`")
             # Send a new message with the converted file
