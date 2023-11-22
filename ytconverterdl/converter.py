@@ -37,11 +37,16 @@ class ConverterCog(commands.Cog):
 
             downloaded_file_path.rename(renamed_file_path)
 
-            await ctx.send(f"`Your video conversion to {'MP3' if to_mp3 else 'MP4'} is complete. Uploading...`")
+            file_size = renamed_file_path.stat().st_size  # Get file size in bytes
 
-            # Send a new message with the converted file
-            await ctx.send(f'`Here is the converted file:`',
-                           file=discord.File(str(renamed_file_path)))
+            if file_size <= 8000000:  # Check if file size is less than or equal to 8 MB (Discord limit)
+                await ctx.send(f"`Your video conversion to {'MP3' if to_mp3 else 'MP4'} is complete. Uploading...`")
+                # Send a new message with the converted file
+                await ctx.send(f'`Here is the converted file:`',
+                               file=discord.File(str(renamed_file_path)))
+            else:
+                # If the file size exceeds the limit, inform the user
+                await ctx.send(f"`The converted file is too large ({file_size / (1024 * 1024):.2f} MB). Please try with a smaller video.`")
 
             # Remove the file after 10 minutes if it exists
             await asyncio.sleep(600)
