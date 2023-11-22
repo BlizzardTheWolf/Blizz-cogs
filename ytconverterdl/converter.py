@@ -55,6 +55,11 @@ class ConverterCog(commands.Cog):
                 # Resize the video to meet the size requirement
                 await self.resize_video(renamed_file_path, renamed_file_path, int(max_size_mb))
 
+                # Check the new file size after transcoding
+                transcoded_file_size = renamed_file_path.stat().st_size
+                if transcoded_file_size > int(max_size_mb) * 1024 * 1024:
+                    raise ValueError(f"`The transcoded file exceeds the specified size limit ({transcoded_file_size / (1024 * 1024):.2f} MB).`")
+
             await conversion_message.edit(content=f"`Uploading...`")
             # Send a new message with the converted file
             await ctx.send(f'`Done`', file=discord.File(str(renamed_file_path)))
