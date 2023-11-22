@@ -19,6 +19,8 @@ class ConverterCog(commands.Cog):
                 'outtmpl': str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}"),
             }
 
+            await ctx.send(f"`Your video is being converted...`")  # Notify that the video is being converted
+
             with YoutubeDL(ydl_opts) as ydl:
                 info_dict = ydl.extract_info(url, download=False)
 
