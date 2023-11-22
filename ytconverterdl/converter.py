@@ -1,9 +1,9 @@
 import discord
 from redbot.core import commands
-from yt_dlp import YoutubeDL
 import asyncio
 from redbot.core import data_manager
 from pathlib import Path
+import subprocess
 
 class ConverterCog(commands.Cog):
     def __init__(self, bot):
@@ -17,30 +17,33 @@ class ConverterCog(commands.Cog):
             ydl_opts = {
                 'format': 'bestvideo[ext=mp4]+bestaudio/best',
                 'outtmpl': str(output_folder / f"%(id)s.mp4"),
-                'postprocessors': [{
-                    'key': 'FFmpegVideoConvertor',
-                    'preferedformat': 'mp4',
-                    'max_filesize': max_size_mb * 1024 * 1024,  # Limit file size during conversion
-                }],
             }
 
             conversion_message = await ctx.send(f"`Your video is being converted...`")
 
-            with YoutubeDL(ydl_opts) as ydl:
-                info_dict = ydl.extract_info(url, download=False)
+            with subprocess.Popen(
+                [
+                    "youtube-dl",
+                    "--format",
+                    f"bestvideo[filesize<{max_size_mb}M]+bestaudio/best",
+                    "--output",
+                    str(output_folder / "%(id)s.mp4"),
+                    "--",
+                    url,
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            ) as process:
+                _, error_output = process.communicate()
 
-                if 'entries' in info_dict:
-                    video_info = info_dict['entries'][0]
-                else:
-                    video_info = info_dict
-
-                ydl.download([url])
+                if process.returncode != 0:
+                    raise Exception(error_output)
 
             await asyncio.sleep(5)
 
             user = ctx.message.author
-            downloaded_file_path = output_folder / f"{video_info['id']}.mp4"
-
+            downloaded_file_path = output_folder / f"{ydl_opts['outtmpl']}"
             await conversion_message.edit(content=f"`Your video conversion to MP4 is complete. Uploading...`")
             await ctx.send(f'`Here is the converted file:`',
                            file=discord.File(str(downloaded_file_path)))
@@ -57,7 +60,7 @@ class ConverterCog(commands.Cog):
     @commands.command()
     async def ytmp4(self, ctx, url, max_size_mb=8):
         """
-        Converts a YouTube video to MP4.
+        Converts a YouTube video to MP4 with a maximum allowed file size.
 
         Parameters:
         `<url>` The URL of the video you want to convert.
