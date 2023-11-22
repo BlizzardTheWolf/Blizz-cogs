@@ -43,10 +43,10 @@ class ConverterCog(commands.Cog):
             # Check if the file size exceeds the limit
             file_size = renamed_file_path.stat().st_size  # Get file size in bytes
             if max_size_mb and file_size > max_size_mb * 1024 * 1024:
-                # If the file size exceeds the limit, transcode the video to a lower size using ffmpeg
-                await conversion_message.edit(content=f"`Reducing video size...`")
+                await conversion_message.edit(content=f"`Transcoding video to required size...`")
                 transcoded_file_path = output_folder / f"{video_info['id']}_transcoded.{'mp3' if to_mp3 else 'mp4'}"
-                subprocess.run(['ffmpeg', '-i', str(renamed_file_path), '-b', '1000k', str(transcoded_file_path)])
+                target_size = max_size_mb * 1024 * 1024 - 100000  # 100 KB buffer
+                subprocess.run(['ffmpeg', '-i', str(renamed_file_path), '-b', '1000k', '-fs', str(target_size), str(transcoded_file_path)])
                 renamed_file_path.unlink()
                 renamed_file_path = transcoded_file_path
 
@@ -61,7 +61,8 @@ class ConverterCog(commands.Cog):
                 # If uploading fails, send an error message
                 await ctx.send(f"`An error occurred during upload. Please check the file and try again.\nError details: {upload_error}`")
 
-            # Remove the file after 10 minutes if it exists
+            # Remove the file after 1 minute if it exists
+            await asyncio.sleep(60)
             if renamed_file_path.exists():
                 renamed_file_path.unlink()
 
