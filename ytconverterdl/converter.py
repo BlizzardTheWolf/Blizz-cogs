@@ -5,6 +5,7 @@ import asyncio
 from redbot.core import data_manager
 from pathlib import Path
 from moviepy.editor import VideoFileClip
+import tempfile
 
 class ConverterCog(commands.Cog):
     def __init__(self, bot):
@@ -24,9 +25,12 @@ class ConverterCog(commands.Cog):
 
             # Resize the video with MoviePy
             resized_clip = video_clip.resize(height=720)
-            
+
+            # Use the system's temporary directory for the audio file
+            temp_audiofile = str(Path(tempfile.gettempdir()) / "temp-audio.m4a")
+
             # Write the resized video to the output path
-            resized_clip.write_videofile(str(output_path), codec="libx264", audio_codec="aac", temp_audiofile="temp-audio.m4a", remove_temp=True, threads=4)
+            resized_clip.write_videofile(str(output_path), codec="libx264", audio_codec="aac", temp_audiofile=temp_audiofile, remove_temp=True, threads=4)
 
         except Exception as e:
             raise ValueError(f"Error during video resizing: {e}")
@@ -62,10 +66,10 @@ class ConverterCog(commands.Cog):
 
             file_size = renamed_file_path.stat().st_size
 
-            if max_size_mb is not None and file_size > int(max_size_mb) * 1024 * 1024:
+            if max_size_mb is not None and file_size > max_size_mb * 1024 * 1024:
                 await conversion_message.edit(content=f"`Transcoding to your specified size...`")
                 # Resize the video to meet the size requirement
-                await self.resize_video(renamed_file_path, renamed_file_path, max_size_mb)
+                await self.resize_video(renamed_file_path, renamed_file_path, max_size_mb * 1024 * 1024)
 
             await conversion_message.edit(content=f"`Uploading...`")
             # Send a new message with the converted file
