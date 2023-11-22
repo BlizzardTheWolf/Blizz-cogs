@@ -4,7 +4,7 @@ from yt_dlp import YoutubeDL
 import asyncio
 from redbot.core import data_manager
 from pathlib import Path
-from moviepy.editor import VideoFileClip, sys
+from moviepy.editor import VideoFileClip
 
 class ConverterCog(commands.Cog):
     def __init__(self, bot):
