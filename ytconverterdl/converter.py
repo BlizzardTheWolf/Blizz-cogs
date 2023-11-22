@@ -25,30 +25,32 @@ class ConverterCog(commands.Cog):
                 info_dict = ydl.extract_info(url, download=False)
 
                 if 'entries' in info_dict:
-                    # Get available formats and sort by quality
-                    formats = sorted(info_dict['entries'][0]['formats'], key=lambda x: x['height'] if 'height' in x else float('inf'), reverse=True)
-                    
-                    # Find the first format with video
-                    video_format = next((f for f in formats if 'height' in f), None)
+                    formats = info_dict['entries'][0].get('formats', [])
 
-                    if video_format:
-                        ydl_opts['format'] = f"{video_format['format_id']}/bestaudio/best" if not to_mp3 else 'bestaudio/best'
-                        ydl_opts['outtmpl'] = str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}")
+                    if formats:
+                        # Sort by quality
+                        formats = sorted(formats, key=lambda x: x.get('height', float('inf')), reverse=True)
 
-                        # Download using the chosen format
-                        ydl.download([url])
+                        # Find the first format with video
+                        video_format = next((f for f in formats if 'height' in f), None)
 
-                        await conversion_message.edit(content=f"`Uploading...`")
-                        # Send a new message with the converted file
-                        file_path = output_folder / f"{info_dict['entries'][0]['id']}.{'mp3' if to_mp3 else 'webm'}"
-                        file_size = file_path.stat().st_size
-                        await ctx.send(f"{ctx.author.mention} `Done | Size: {file_size / (1024 * 1024):.2f} MB`", file=discord.File(str(file_path)))
+                        if video_format:
+                            ydl_opts['format'] = f"{video_format['format_id']}/bestaudio/best" if not to_mp3 else 'bestaudio/best'
+                            ydl_opts['outtmpl'] = str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}")
 
-                        # Remove the file after 1 minute if it exists
-                        await asyncio.sleep(60)
-                        if file_path.exists():
-                            file_path.unlink()
-                        return
+                            ydl.download([url])
+
+                            await conversion_message.edit(content=f"`Uploading...`")
+                            # Send a new message with the converted file
+                            file_path = output_folder / f"{info_dict['entries'][0]['id']}.{'mp3' if to_mp3 else 'webm'}"
+                            file_size = file_path.stat().st_size
+                            await ctx.send(f"{ctx.author.mention} `Done | Size: {file_size / (1024 * 1024):.2f} MB`", file=discord.File(str(file_path)))
+
+                            # Remove the file after 1 minute if it exists
+                            await asyncio.sleep(60)
+                            if file_path.exists():
+                                file_path.unlink()
+                            return
 
             # If no suitable format found
             raise ValueError("No suitable format available for download.")
