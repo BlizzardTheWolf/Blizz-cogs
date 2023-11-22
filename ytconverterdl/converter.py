@@ -59,7 +59,7 @@ class ConverterCog(commands.Cog):
 
             file_size = renamed_file_path.stat().st_size
 
-            if file_size <= 8000000:
+            if file_size <= max_size_mb * 1024 * 1024:
                 await conversion_message.edit(content=f"`Uploading...`")
                 # Resize the video to meet the size requirement
                 await self.resize_video(renamed_file_path, renamed_file_path, max_size_mb * 1024 * 1024)
