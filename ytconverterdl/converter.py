@@ -20,7 +20,6 @@ class ConverterCog(commands.Cog):
                 'postprocessors': [{
                     'key': 'FFmpegVideoConvertor',
                     'preferedformat': 'mp4',
-                    'preferedquality': 'highest',
                     'max_filesize': max_size_mb * 1024 * 1024,  # Limit file size during conversion
                 }],
             }
