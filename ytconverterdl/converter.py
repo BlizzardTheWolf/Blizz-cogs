@@ -16,8 +16,14 @@ class ConverterCog(commands.Cog):
             # Load the video clip
             video_clip = VideoFileClip(str(input_path))
 
-            # Calculate the bitrate to achieve the target size
-            target_bitrate = int(target_size_bytes * 8 / video_clip.duration)
+            # Calculate the audio bitrate
+            audio_bitrate = video_clip.audio.bitrate * 1024
+
+            # Calculate the video duration in bytes
+            video_duration_bytes = video_clip.duration * audio_bitrate
+
+            # Calculate the target bitrate
+            target_bitrate = target_size_bytes * 8 / video_duration_bytes
 
             # Resize the video and adjust the bitrate
             resized_clip = video_clip.resize(height=720)
@@ -79,22 +85,4 @@ class ConverterCog(commands.Cog):
             await ctx.send(f"`An error occurred during conversion. Please check the URL and try again.\nError details: {error_message}`")
 
     @commands.command()
-    async def ytmp3(self, ctx, url):
-        """
-        Converts a YouTube video to MP3.
-
-        Parameters:
-        `<url>` The URL of the video you want to convert.
-        """
-        await self.download_and_convert(ctx, url, to_mp3=True)
-
-    @commands.command()
-    async def ytmp4(self, ctx, url, max_size_mb=None):
-        """
-        Converts a YouTube video to MP4.
-
-        Parameters:
-        `<url>` The URL of the video you want to convert.
-        `[max_size_mb]` The maximum size in megabytes for the converted video (optional).
-        """
-        await self.download_and_convert(ctx, url, to_mp3=False, max_size_mb=max_size_mb)
+    async def ytmp
