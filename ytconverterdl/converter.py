@@ -7,7 +7,7 @@ import asyncio
 from redbot.core import data_manager
 from pathlib import Path
 
-class YTConverterCog(commands.Cog):
+class ConverterCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.data_folder = data_manager.cog_data_path(cog_instance=self)
