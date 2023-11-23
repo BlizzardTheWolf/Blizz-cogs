@@ -7,18 +7,20 @@ import asyncio
 from redbot.core import data_manager
 from pathlib import Path
 
-class ConverterCog(commands.Cog):
+class YTConverterCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.data_folder = data_manager.cog_data_path(cog_instance=self)
         self.app = web.Application()
         self.app.router.add_route('GET', '/videos/{filename}', self.handle_video_request)
         self.runner = web.AppRunner(self.app)
+        self.hostname = None  # Store the hostname for web server
+        self.port = 8080  # Default port
         asyncio.create_task(self.start_server())
 
     async def start_server(self):
         await self.runner.setup()
-        site = web.TCPSite(self.runner, 'YOUR_SERVER_IP', 8080)  # Replace 'YOUR_SERVER_IP' with the actual IP address or hostname
+        site = web.TCPSite(self.runner, '0.0.0.0', self.port)
         await site.start()
 
     async def handle_video_request(self, request):
@@ -34,13 +36,13 @@ class ConverterCog(commands.Cog):
         else:
             return web.Response(status=404)
 
-    async def download_and_convert(self, ctx, url, to_mp3=False):
+    async def download_and_convert(self, ctx, url):
         try:
-            output_folder = self.data_folder / ("mp3" if to_mp3 else "mp4")
+            output_folder = self.data_folder / "mp4"
 
             ydl_opts = {
-                'format': 'bestvideo+bestaudio/best' if not to_mp3 else 'bestaudio/best',
-                'outtmpl': str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}"),
+                'format': 'bestvideo[height<=?1080]+bestaudio/best',
+                'outtmpl': str(output_folder / f"%(id)s.mp4"),
             }
 
             # Send "Converting..." message
@@ -50,42 +52,24 @@ class ConverterCog(commands.Cog):
                 info_dict = ydl.extract_info(url, download=False)
 
                 if 'entries' in info_dict:
-                    formats = info_dict['entries'][0].get('formats', [])
+                    ydl_opts['outtmpl'] = str(output_folder / f"%(id)s.mp4")
 
-                    if formats:
-                        # Sort formats by quality
-                        formats = sorted(formats, key=lambda x: x.get('quality', 0), reverse=True)
-                        selected_format = formats[0]['format_id']
+                    ydl.download([url])
 
-                        ydl_opts['format'] = selected_format
-                        ydl_opts['outtmpl'] = str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}")
+                    # Update message to indicate uploading
+                    await conversion_message.edit(content=f"`Uploading...`")
+                    video_id = info_dict['entries'][0]['id']
+                    file_path = output_folder / f"{video_id}.mp4"
 
-                        # Check video duration before downloading
-                        video_duration = info_dict['entries'][0].get('duration', 0)
-                        if video_duration > 900:  # 15 minutes
-                            raise ValueError("Video duration exceeds the limit (15 minutes).")
+                    # Serve the video using aiohttp
+                    download_link = f"http://{self.hostname}:{self.port}/videos/{video_id}"
+                    await ctx.send(f"{ctx.author.mention} `Done | Download Link: {download_link}`")
 
-                        ydl.download([url])
-
-                        # Update message to indicate uploading
-                        await conversion_message.edit(content=f"`Uploading...`")
-                        video_id = info_dict['entries'][0]['id']
-                        file_path = output_folder / f"{video_id}.{'mp3' if to_mp3 else 'webm'}"
-
-                        # Check file size after downloading
-                        file_size = file_path.stat().st_size
-                        if file_size > 250 * 1024 * 1024:  # 250 MB
-                            raise ValueError("File size exceeds the limit (250 MB).")
-
-                        # Serve the video using aiohttp
-                        download_link = f"http://web.purplepanda.cc:4090/videos/{video_id}"  # Replace 'YOUR_SERVER_IP' with the actual IP address or hostname
-                        await ctx.send(f"{ctx.author.mention} `Done | Download Link: {download_link}`")
-
-                        # Remove the file after 1 minute if it exists
-                        await asyncio.sleep(60)
-                        if file_path.exists():
-                            file_path.unlink()
-                        return
+                    # Remove the file after 1 minute if it exists
+                    await asyncio.sleep(60)
+                    if file_path.exists():
+                        file_path.unlink()
+                    return
 
             raise ValueError("No suitable format available for download.")
 
@@ -94,9 +78,26 @@ class ConverterCog(commands.Cog):
             await ctx.send(f"{ctx.author.mention} `An error occurred during conversion. {error_message}`")
 
     @commands.command()
-    async def ytmp3(self, ctx, url):
-        await self.download_and_convert(ctx, url, to_mp3=True)
+    @commands.is_owner()
+    async def ytcset(self, ctx, hostname: str, port: int = 8080):
+        """
+        Set the hostname and port for the web server.
+        """
+        self.hostname = hostname
+        self.port = port
+        await ctx.send(f"Hostname set to {hostname}, Port set to {port}")
 
     @commands.command()
-    async def ytmp4(self, ctx, url):
-        await self.download_and_convert(ctx, url, to_mp3=False)
+    async def ytc(self, ctx, url):
+        """
+        Convert a YouTube video to MP4 with highest resolution.
+        """
+        await self.download_and_convert(ctx, url)
+
+    @commands.command()
+    async def ytcurl(self, ctx, video_id):
+        """
+        Get the download URL for a converted video.
+        """
+        download_link = f"http://{self.hostname}:{self.port}/videos/{video_id}"
+        await ctx.send(f"{ctx.author.mention} `Download Link: {download_link}`")
