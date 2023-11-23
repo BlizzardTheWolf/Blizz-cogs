@@ -39,7 +39,7 @@ class ConverterCog(commands.Cog):
             output_folder = self.data_folder / ("mp3" if to_mp3 else "mp4")
 
             ydl_opts = {
-                'format': 'bestvideo[height<=720]+bestaudio/best' if not to_mp3 else 'bestaudio/best',
+                'format': 'bestvideo+bestaudio/best' if not to_mp3 else 'bestaudio/best',
                 'outtmpl': str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}"),
             }
 
@@ -50,44 +50,37 @@ class ConverterCog(commands.Cog):
                 info_dict = ydl.extract_info(url, download=False)
 
                 if 'entries' in info_dict:
-                    formats = info_dict['entries'][0].get('formats', [])
+                    ydl_opts['format'] = info_dict['entries'][0]['format_id']
+                    ydl_opts['outtmpl'] = str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}")
 
-                    if formats:
-                        formats = sorted(formats, key=lambda x: x.get('height', float('inf')), reverse=True)
-                        video_format = next((f for f in formats if 'height' in f), None)
+                    ydl.download([url])
 
-                        if video_format:
-                            ydl_opts['format'] = f"{video_format['format_id']}/bestaudio/best" if not to_mp3 else 'bestaudio/best'
-                            ydl_opts['outtmpl'] = str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}")
+                    # Update message to indicate uploading
+                    await conversion_message.edit(content=f"`Uploading...`")
+                    video_id = info_dict['entries'][0]['id']
+                    file_path = output_folder / f"{video_id}.{'mp3' if to_mp3 else 'webm'}"
 
-                            ydl.download([url])
+                    # Check file size and duration
+                    file_size = file_path.stat().st_size
+                    file_duration = info_dict['entries'][0].get('duration', 0)
 
-                            # Update message to indicate uploading
-                            await conversion_message.edit(content=f"`Uploading...`")
-                            video_id = info_dict['entries'][0]['id']
-                            file_path = output_folder / f"{video_id}.{'mp3' if to_mp3 else 'webm'}"
+                    if file_size <= 250 * 1024 * 1024 and file_duration <= 900:  # 250 MB and 15 minutes
+                        # Serve the video using aiohttp
+                        download_link = f"http://yourserverip:8080/videos/{video_id}"
+                        await ctx.send(f"{ctx.author.mention} `Done | Download Link: {download_link}`")
+                    else:
+                        # File exceeds size limit
+                        await ctx.send(
+                            f"{ctx.author.mention} `File exceeds size limit. Size: {file_size / (1024 * 1024):.2f} MB. Removing...`"
+                        )
+                        if file_path.exists():
+                            file_path.unlink()
 
-                            # Check file size and duration
-                            file_size = file_path.stat().st_size
-                            file_duration = info_dict['entries'][0].get('duration', 0)
-
-                            if file_size <= 250 * 1024 * 1024 and file_duration <= 900:  # 250 MB and 15 minutes
-                                # Serve the video using aiohttp
-                                download_link = f"http://web.purplepanda.cc:4090/videos/{video_id}"
-                                await ctx.send(f"{ctx.author.mention} `Done | Download Link: {download_link}`")
-                            else:
-                                # File exceeds size limit
-                                await ctx.send(
-                                    f"{ctx.author.mention} `File exceeds size limit. Size: {file_size / (1024 * 1024):.2f} MB. Removing...`"
-                                )
-                                if file_path.exists():
-                                    file_path.unlink()
-
-                            # Remove the file after 1 minute if it exists
-                            await asyncio.sleep(60)
-                            if file_path.exists():
-                                file_path.unlink()
-                            return
+                    # Remove the file after 1 minute if it exists
+                    await asyncio.sleep(60)
+                    if file_path.exists():
+                        file_path.unlink()
+                    return
 
             raise ValueError("No suitable format available for download.")
 
