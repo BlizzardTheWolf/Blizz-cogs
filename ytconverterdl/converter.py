@@ -103,7 +103,7 @@ class ConverterCog(commands.Cog):
             base_url = f"http://{self.hostname}:{self.port}"
             return f"{base_url}/videos/{filename}"
         else:
-            return f"http://localhost:0/videos/{filename}"  # Use a placeholder URL if the server is not running
+            return None
 
     async def stop_server(self):
         await self.runner.cleanup()
