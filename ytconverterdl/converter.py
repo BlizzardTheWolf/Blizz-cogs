@@ -50,37 +50,44 @@ class ConverterCog(commands.Cog):
                 info_dict = ydl.extract_info(url, download=False)
 
                 if 'entries' in info_dict:
-                    ydl_opts['format'] = info_dict['entries'][0]['format_id']
-                    ydl_opts['outtmpl'] = str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}")
+                    formats = info_dict['entries'][0].get('formats', [])
 
-                    ydl.download([url])
+                    if formats:
+                        # Sort formats by quality
+                        formats = sorted(formats, key=lambda x: x.get('quality', 0), reverse=True)
+                        selected_format = formats[0]['format_id']
 
-                    # Update message to indicate uploading
-                    await conversion_message.edit(content=f"`Uploading...`")
-                    video_id = info_dict['entries'][0]['id']
-                    file_path = output_folder / f"{video_id}.{'mp3' if to_mp3 else 'webm'}"
+                        ydl_opts['format'] = selected_format
+                        ydl_opts['outtmpl'] = str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}")
 
-                    # Check file size and duration
-                    file_size = file_path.stat().st_size
-                    file_duration = info_dict['entries'][0].get('duration', 0)
+                        ydl.download([url])
 
-                    if file_size <= 250 * 1024 * 1024 and file_duration <= 900:  # 250 MB and 15 minutes
-                        # Serve the video using aiohttp
-                        download_link = f"http://yourserverip:8080/videos/{video_id}"
-                        await ctx.send(f"{ctx.author.mention} `Done | Download Link: {download_link}`")
-                    else:
-                        # File exceeds size limit
-                        await ctx.send(
-                            f"{ctx.author.mention} `File exceeds size limit. Size: {file_size / (1024 * 1024):.2f} MB. Removing...`"
-                        )
+                        # Update message to indicate uploading
+                        await conversion_message.edit(content=f"`Uploading...`")
+                        video_id = info_dict['entries'][0]['id']
+                        file_path = output_folder / f"{video_id}.{'mp3' if to_mp3 else 'webm'}"
+
+                        # Check file size and duration
+                        file_size = file_path.stat().st_size
+                        file_duration = info_dict['entries'][0].get('duration', 0)
+
+                        if file_size <= 250 * 1024 * 1024 and file_duration <= 900:  # 250 MB and 15 minutes
+                            # Serve the video using aiohttp
+                            download_link = f"http://yourserverip:8080/videos/{video_id}"
+                            await ctx.send(f"{ctx.author.mention} `Done | Download Link: {download_link}`")
+                        else:
+                            # File exceeds size limit
+                            await ctx.send(
+                                f"{ctx.author.mention} `File exceeds size limit. Size: {file_size / (1024 * 1024):.2f} MB. Removing...`"
+                            )
+                            if file_path.exists():
+                                file_path.unlink()
+
+                        # Remove the file after 1 minute if it exists
+                        await asyncio.sleep(60)
                         if file_path.exists():
                             file_path.unlink()
-
-                    # Remove the file after 1 minute if it exists
-                    await asyncio.sleep(60)
-                    if file_path.exists():
-                        file_path.unlink()
-                    return
+                        return
 
             raise ValueError("No suitable format available for download.")
 
