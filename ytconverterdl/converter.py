@@ -1,10 +1,9 @@
+from redbot.core import commands, data_manager
 import discord
-from discord.ext import commands
 import aiohttp
 import yt_dlp
 import asyncio
 from pathlib import Path
-from redbot.core import data_manager
 
 class ConverterCog(commands.Cog):
     def __init__(self, bot):
@@ -106,3 +105,6 @@ class ConverterCog(commands.Cog):
     async def stop_server(self):
         await self.runner.cleanup()
         self.is_server_running = False
+
+def setup(bot):
+    bot.add_cog(ConverterCog(bot))
