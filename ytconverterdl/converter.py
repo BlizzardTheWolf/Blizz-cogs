@@ -106,6 +106,3 @@ class ConverterCog(commands.Cog):
     async def stop_server(self):
         await self.runner.cleanup()
         self.is_server_running = False
-
-def setup(bot):
-    bot.add_cog(ConverterCog(bot))
