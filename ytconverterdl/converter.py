@@ -114,3 +114,10 @@ class ConverterCog(commands.Cog):
         """
         download_link = f"http://{self.hostname}:{self.port}/videos/{video_id}"
         await ctx.send(f"{ctx.author.mention} `Download Link: {download_link}`")
+
+    @commands.command()
+    async def ytcsettings(self, ctx):
+        """
+        Get the current settings for the web server.
+        """
+        await ctx.send(f"Hostname: {self.hostname}, Port: {self.port}")
