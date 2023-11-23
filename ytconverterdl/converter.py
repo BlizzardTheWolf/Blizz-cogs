@@ -73,7 +73,7 @@ class ConverterCog(commands.Cog):
 
                             if file_size <= 250 * 1024 * 1024 and file_duration <= 900:  # 250 MB and 15 minutes
                                 # Serve the video using aiohttp
-                                download_link = f"http://yourserverip:8080/videos/{video_id}"
+                                download_link = f"http://web.purplepanda.cc:4090/videos/{video_id}"
                                 await ctx.send(f"{ctx.author.mention} `Done | Download Link: {download_link}`")
                             else:
                                 # File exceeds size limit
