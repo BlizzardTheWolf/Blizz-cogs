@@ -100,7 +100,8 @@ class ConverterCog(commands.Cog):
 
     async def get_download_url(self, filename):
         if self.is_server_running:
-            return f"http://{self.hostname}:{self.port}/videos/{filename}"
+            base_url = f"http://{self.hostname}:{self.port}"
+            return f"{base_url}/videos/{filename}"
         else:
             return None
 
