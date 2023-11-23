@@ -73,11 +73,8 @@ class ConverterCog(commands.Cog):
 
     @commands.command()
     async def ytcurl(self, ctx, filename):
-        if self.is_server_running:
-            download_url = await self.get_download_url(filename)
-            await ctx.send(f"Download URL for {filename}: {download_url} {ctx.author.mention}. This link will expire in 24 hours.")
-        else:
-            await ctx.send("Web server is not running. Start the server using the ytstart command.")
+        download_url = await self.get_download_url(filename)
+        await ctx.send(f"Download URL for {filename}: {download_url} {ctx.author.mention}. This link will expire in 24 hours.")
 
     @commands.command()
     async def ytcsettings(self, ctx):
@@ -106,7 +103,7 @@ class ConverterCog(commands.Cog):
             base_url = f"http://{self.hostname}:{self.port}"
             return f"{base_url}/videos/{filename}"
         else:
-            return None
+            return f"http://localhost:0/videos/{filename}"  # Use a placeholder URL if the server is not running
 
     async def stop_server(self):
         await self.runner.cleanup()
