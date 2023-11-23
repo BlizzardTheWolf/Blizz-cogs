@@ -18,7 +18,7 @@ class ConverterCog(commands.Cog):
 
     async def start_server(self):
         await self.runner.setup()
-        site = web.TCPSite(self.runner, '0.0.0.0', 8080)  # Change the port as needed
+        site = web.TCPSite(self.runner, 'http://web.purplepanda.cc', 8080)  # Change the port as needed
         await site.start()
 
     async def handle_video_request(self, request):
