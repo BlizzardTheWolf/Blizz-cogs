@@ -18,7 +18,7 @@ class ConverterCog(commands.Cog):
 
     async def start_server(self):
         await self.runner.setup()
-        site = web.TCPSite(self.runner, 'http://web.purplepanda.cc', 8080)  # Change the port as needed
+        site = web.TCPSite(self.runner, 'YOUR_SERVER_IP', 8080)  # Replace 'YOUR_SERVER_IP' with the actual IP address or hostname
         await site.start()
 
     async def handle_video_request(self, request):
@@ -51,9 +51,6 @@ class ConverterCog(commands.Cog):
 
                 if 'entries' in info_dict:
                     formats = info_dict['entries'][0].get('formats', [])
-                    print("Available formats:")
-                    for format_info in formats:
-                        print(format_info)
 
                     if formats:
                         # Sort formats by quality
@@ -81,7 +78,7 @@ class ConverterCog(commands.Cog):
                             raise ValueError("File size exceeds the limit (250 MB).")
 
                         # Serve the video using aiohttp
-                        download_link = f"http://yourserverip:8080/videos/{video_id}"
+                        download_link = f"http://web.purplepanda.cc:4090/videos/{video_id}"  # Replace 'YOUR_SERVER_IP' with the actual IP address or hostname
                         await ctx.send(f"{ctx.author.mention} `Done | Download Link: {download_link}`")
 
                         # Remove the file after 1 minute if it exists
