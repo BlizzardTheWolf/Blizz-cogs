@@ -41,8 +41,8 @@ class ConverterCog(commands.Cog):
             output_folder = self.data_folder / ("mp3" if to_mp3 else "mp4")
 
             ydl_opts = {
-                'format': 'bestvideo[height<=?1080]+bestaudio/best' if not to_mp3 else 'bestaudio/best',
-                'outtmpl': str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}"),
+                'format': 'bestvideo+bestaudio/best' if not to_mp3 else 'bestaudio/best',
+                'outtmpl': str(output_folder / "%(id)s.{'mp3' if to_mp3 else 'webm'}"),
             }
 
             # Send "Converting..." message
@@ -52,7 +52,7 @@ class ConverterCog(commands.Cog):
                 info_dict = ydl.extract_info(url, download=False)
 
                 if 'entries' in info_dict:
-                    ydl_opts['outtmpl'] = str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}")
+                    ydl_opts['outtmpl'] = str(output_folder / f"{info_dict['entries'][0]['id']}.{'mp3' if to_mp3 else 'webm'}")
 
                     ydl.download([url])
 
