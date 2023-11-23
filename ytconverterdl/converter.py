@@ -52,13 +52,13 @@ class ConverterCog(commands.Cog):
                 info_dict = ydl.extract_info(url, download=False)
 
                 if 'entries' in info_dict:
-                    ydl_opts['outtmpl'] = str(output_folder / f"{info_dict['entries'][0]['id']}.{'mp3' if to_mp3 else 'webm'}")
+                    video_id = info_dict['entries'][0]['id']
+                    ydl_opts['outtmpl'] = str(output_folder / f"{video_id}.{'mp3' if to_mp3 else 'webm'}")
 
                     ydl.download([url])
 
                     # Update message to indicate uploading
                     await conversion_message.edit(content=f"`Uploading...`")
-                    video_id = info_dict['entries'][0]['id']
                     file_path = output_folder / f"{video_id}.{'mp3' if to_mp3 else 'webm'}"
 
                     # Serve the video using aiohttp
