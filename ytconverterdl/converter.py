@@ -4,60 +4,77 @@ from yt_dlp import YoutubeDL
 import asyncio
 from redbot.core import data_manager
 from pathlib import Path
-from flask import Flask, send_file
-import threading
-
-app = Flask(__name__)
 
 class ConverterCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.video_path = "videos/"
-        self.server_thread = threading.Thread(target=app.run, kwargs={"port": 4090})
-        self.server_thread.start()
+        self.data_folder = data_manager.cog_data_path(cog_instance=self)
 
-    def cog_unload(self):
-        # Stop the Flask server thread when the cog is unloaded
-        self.server_thread.join()
-
-    @commands.command()
-    async def ytmp4(self, ctx, url):
+    async def download_and_convert(self, ctx, url, to_mp3=False):
         try:
-            output_folder = self.video_path
+            output_folder = self.data_folder / ("mp3" if to_mp3 else "mp4")
+
             ydl_opts = {
-                'format': 'bestvideo[ext=mp4]+bestaudio/best',
-                'outtmpl': str(output_folder / "%(id)s.{'mp4'}"),
+                'format': 'bestvideo[height<=720]+bestaudio/best' if not to_mp3 else 'bestaudio/best',
+                'outtmpl': str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}"),
             }
 
-            conversion_message = await ctx.send("`Video is being processed...`")
+            conversion_message = await ctx.send(f"`Downloading...`")
 
             with YoutubeDL(ydl_opts) as ydl:
                 info_dict = ydl.extract_info(url, download=False)
 
                 if 'entries' in info_dict:
-                    video_info = info_dict['entries'][0]
-                else:
-                    video_info = info_dict
+                    formats = info_dict['entries'][0].get('formats', [])
 
-                ydl.download([url])
+                    if formats:
+                        # Sort by quality
+                        formats = sorted(formats, key=lambda x: x.get('height', float('inf')), reverse=True)
 
-            await asyncio.sleep(5)
+                        # Find the first format with video
+                        video_format = next((f for f in formats if 'height' in f), None)
 
-            video_id = video_info['id']
-            video_filename = f"{video_id}.mp4"
-            video_path = Path(self.video_path) / video_filename
+                        if video_format:
+                            ydl_opts['format'] = f"{video_format['format_id']}/bestaudio/best" if not to_mp3 else 'bestaudio/best'
+                            ydl_opts['outtmpl'] = str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}")
 
-            await ctx.send(f"Here is your video: http://web.purplepanda.cc:4090/{video_filename}")
+                            ydl.download([url])
 
-            # Remove the file after 10 minutes
-            await asyncio.sleep(600)
-            try:
-                # Remove the file if it exists
-                if video_path.exists():
-                    video_path.unlink()
-            except Exception as e:
-                print(f"Error removing video file: {e}")
+                            await conversion_message.edit(content=f"`Uploading...`")
+                            # Send a new message with the converted file
+                            file_path = output_folder / f"{info_dict['entries'][0]['id']}.{'mp3' if to_mp3 else 'webm'}"
+                            file_size = file_path.stat().st_size
+                            await ctx.send(f"{ctx.author.mention} `Done | Size: {file_size / (1024 * 1024):.2f} MB`", file=discord.File(str(file_path)))
+
+                            # Remove the file after 1 minute if it exists
+                            await asyncio.sleep(60)
+                            if file_path.exists():
+                                file_path.unlink()
+                            return
+
+            # If no suitable format found
+            raise ValueError("No suitable format available for download.")
 
         except Exception as e:
             error_message = str(e)
-            await ctx.send(f"`An error occurred during video processing. Please check the URL and try again.\nError details: {error_message}`")
+            await ctx.send(f"{ctx.author.mention} `An error occurred during conversion. Please check the URL and try again.\nError details: {error_message}`")
+
+    @commands.command()
+    async def ytmp3(self, ctx, url):
+        """
+        Converts a YouTube video to MP3.
+
+        Parameters:
+        `<url>` The URL of the video you want to convert.
+        """
+        await self.download_and_convert(ctx, url, to_mp3=True)
+
+    @commands.command()
+    async def ytmp4(self, ctx, url):
+        """
+        Converts a YouTube video to MP4.
+
+        Parameters:
+        `<url>` The URL of the video you want to convert.
+        """
+        await self.download_and_convert(ctx, url, to_mp3=False)
