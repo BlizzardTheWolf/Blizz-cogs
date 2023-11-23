@@ -18,6 +18,11 @@ class ConverterCog(commands.Cog):
 
     async def start_server(self):
         await self.bot.wait_until_ready()
+
+        # Ensure runner is set up
+        if not self.runner.is_setup():
+            await self.runner.setup()
+
         self.app.router.add_route('GET', '/videos/{filename}', self.handle_video_request)
         site = aiohttp.web.TCPSite(self.runner, self.hostname, self.port)
         await site.start()
