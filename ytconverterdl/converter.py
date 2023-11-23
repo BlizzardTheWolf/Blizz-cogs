@@ -4,6 +4,7 @@ import aiohttp
 import yt_dlp
 import asyncio
 from pathlib import Path
+import os
 
 class ConverterCog(commands.Cog):
     def __init__(self, bot):
@@ -40,11 +41,11 @@ class ConverterCog(commands.Cog):
     async def download_and_convert(self, ctx, url, format):
         ydl_opts = {
             'format': 'bestaudio/best' if format == 'mp3' else 'bestvideo+bestaudio/best',
-            'outtmpl': f'{self.data_folder}/%(title)s.%(ext)s',
+            'outtmpl': f'{self.data_folder}/%(id)s.%(ext)s',
         }
 
-        await ctx.send(f"Converting to {format}...")
-        
+        await ctx.send(f"Converting to {format}... This may take a moment.")
+
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info_dict = ydl.extract_info(url, download=True)
             filename = ydl.prepare_filename(info_dict)
@@ -54,12 +55,14 @@ class ConverterCog(commands.Cog):
     @commands.command()
     async def ytmp3(self, ctx, url):
         filename = await self.download_and_convert(ctx, url, 'mp3')
-        await ctx.send(f"Conversion complete! You can download the MP3 [here]({await self.get_download_url(filename)}) {ctx.author.mention}")
+        download_url = await self.get_download_url(filename)
+        await ctx.send(f"Conversion complete! You can download the MP3 [here]({download_url}) {ctx.author.mention}. This link will expire in 24 hours.")
 
     @commands.command()
     async def ytmp4(self, ctx, url):
         filename = await self.download_and_convert(ctx, url, 'mp4')
-        await ctx.send(f"Conversion complete! You can download the MP4 [here]({await self.get_download_url(filename)}) {ctx.author.mention}")
+        download_url = await self.get_download_url(filename)
+        await ctx.send(f"Conversion complete! You can download the MP4 [here]({download_url}) {ctx.author.mention}. This link will expire in 24 hours.")
 
     @commands.command()
     @commands.is_owner()
@@ -72,7 +75,7 @@ class ConverterCog(commands.Cog):
     async def ytcurl(self, ctx, filename):
         if self.is_server_running:
             download_url = await self.get_download_url(filename)
-            await ctx.send(f"Download URL for {filename}: {download_url} {ctx.author.mention}")
+            await ctx.send(f"Download URL for {filename}: {download_url} {ctx.author.mention}. This link will expire in 24 hours.")
         else:
             await ctx.send("Web server is not running. Start the server using the ytstart command.")
 
@@ -109,5 +112,13 @@ class ConverterCog(commands.Cog):
         await self.runner.cleanup()
         self.is_server_running = False
 
+    async def remove_file_after_24_hours(self, filename):
+        await asyncio.sleep(24 * 60 * 60)  # Sleep for 24 hours
+        filepath = Path(self.data_folder) / filename
+        if filepath.is_file():
+            os.remove(filepath)
+
 def setup(bot):
-    bot.add_cog(ConverterCog(bot))
+    cog = ConverterCog(bot)
+    bot.add_cog(cog)
+    bot.loop.create_task(cog.remove_file_after_24_hours("example.mp4"))  # Replace with the actual default filename
