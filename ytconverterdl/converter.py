@@ -3,6 +3,7 @@ from discord.ext import commands
 import aiohttp
 import yt_dlp
 import asyncio
+from pathlib import Path
 from redbot.core import data_manager
 
 class ConverterCog(commands.Cog):
@@ -11,23 +12,24 @@ class ConverterCog(commands.Cog):
         self.data_folder = data_manager.cog_data_path(cog_instance=self)
         self.app = aiohttp.web.Application()
         self.runner = aiohttp.web.AppRunner(self.app)
-        self.hostname = None
+        self.hostname = "127.0.0.1"  # Set a default hostname
         self.port = 8080
         asyncio.create_task(self.start_server())
 
     async def start_server(self):
         await self.bot.wait_until_ready()
+        self.app.router.add_route('GET', '/videos/{filename}', self.handle_video_request)
         site = aiohttp.web.TCPSite(self.runner, self.hostname, self.port)
         await site.start()
 
     async def handle_video_request(self, request):
         filename = request.match_info.get('filename', '')
-        video_path = f"{self.data_folder}/{filename}"
-        if not video_path.endswith(('.mp3', '.mp4')) or not video_path.startswith(self.data_folder):
+        video_path = Path(self.data_folder) / filename
+        if not video_path.is_file() or not video_path.parts[:len(Path(self.data_folder).parts)] == Path(self.data_folder).parts:
             raise aiohttp.web.HTTPNotFound()
         
         with open(video_path, 'rb') as f:
-            return aiohttp.web.Response(body=f.read(), content_type='audio/mpeg' if video_path.endswith('.mp3') else 'video/mp4')
+            return aiohttp.web.Response(body=f.read(), content_type='audio/mpeg' if video_path.suffix == '.mp3' else 'video/mp4')
 
     async def download_and_convert(self, url, format):
         ydl_opts = {
@@ -60,15 +62,27 @@ class ConverterCog(commands.Cog):
 
     @commands.command()
     async def ytcurl(self, ctx, filename):
-        download_url = await self.get_download_url(filename)
-        await ctx.send(f"Download URL for {filename}: {download_url}")
+        if self.hostname is not None:
+            download_url = await self.get_download_url(filename)
+            await ctx.send(f"Download URL for {filename}: {download_url}")
+        else:
+            await ctx.send("Web server is not configured. Set the hostname and port using the ytcset command.")
 
     @commands.command()
     async def ytcsettings(self, ctx):
         await ctx.send(f"Web server settings - Hostname: {self.hostname}, Port: {self.port}")
 
     async def get_download_url(self, filename):
-        return f"http://{self.hostname}:{self.port}/videos/{filename}"
+        if self.hostname is not None:
+            return f"http://{self.hostname}:{self.port}/videos/{filename}"
+        else:
+            return None
+
+    def cog_unload(self):
+        asyncio.create_task(self.stop_server())
+
+    async def stop_server(self):
+        await self.runner.cleanup()
 
 def setup(bot):
     bot.add_cog(ConverterCog(bot))
