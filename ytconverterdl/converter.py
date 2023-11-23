@@ -42,6 +42,10 @@ class ConverterCog(commands.Cog):
         ydl_opts = {
             'format': 'bestaudio/best' if format == 'mp3' else 'bestvideo+bestaudio/best',
             'outtmpl': f'{self.data_folder}/%(id)s.%(ext)s',
+            'postprocessors': [{
+                'key': 'FFmpegVideoConvertor',
+                'preferedformat': 'mp4' if format == 'mp4' else 'webm'
+            }] if format == 'mp4' else []
         }
 
         await ctx.send(f"Converting to {format}... This may take a moment.")
@@ -114,8 +118,3 @@ class ConverterCog(commands.Cog):
         filepath = Path(self.data_folder) / filename
         if filepath.is_file():
             os.remove(filepath)
-
-def setup(bot):
-    cog = ConverterCog(bot)
-    bot.add_cog(cog)
-    bot.loop.create_task(cog.remove_file_after_24_hours("example.mp4"))  # Replace with the actual default filename
