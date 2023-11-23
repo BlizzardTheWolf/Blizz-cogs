@@ -51,6 +51,9 @@ class ConverterCog(commands.Cog):
 
                 if 'entries' in info_dict:
                     formats = info_dict['entries'][0].get('formats', [])
+                    print("Available formats:")
+                    for format_info in formats:
+                        print(format_info)
 
                     if formats:
                         # Sort formats by quality
@@ -60,6 +63,11 @@ class ConverterCog(commands.Cog):
                         ydl_opts['format'] = selected_format
                         ydl_opts['outtmpl'] = str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}")
 
+                        # Check video duration before downloading
+                        video_duration = info_dict['entries'][0].get('duration', 0)
+                        if video_duration > 900:  # 15 minutes
+                            raise ValueError("Video duration exceeds the limit (15 minutes).")
+
                         ydl.download([url])
 
                         # Update message to indicate uploading
@@ -67,21 +75,14 @@ class ConverterCog(commands.Cog):
                         video_id = info_dict['entries'][0]['id']
                         file_path = output_folder / f"{video_id}.{'mp3' if to_mp3 else 'webm'}"
 
-                        # Check file size and duration
+                        # Check file size after downloading
                         file_size = file_path.stat().st_size
-                        file_duration = info_dict['entries'][0].get('duration', 0)
+                        if file_size > 250 * 1024 * 1024:  # 250 MB
+                            raise ValueError("File size exceeds the limit (250 MB).")
 
-                        if file_size <= 250 * 1024 * 1024 and file_duration <= 900:  # 250 MB and 15 minutes
-                            # Serve the video using aiohttp
-                            download_link = f"http://yourserverip:8080/videos/{video_id}"
-                            await ctx.send(f"{ctx.author.mention} `Done | Download Link: {download_link}`")
-                        else:
-                            # File exceeds size limit
-                            await ctx.send(
-                                f"{ctx.author.mention} `File exceeds size limit. Size: {file_size / (1024 * 1024):.2f} MB. Removing...`"
-                            )
-                            if file_path.exists():
-                                file_path.unlink()
+                        # Serve the video using aiohttp
+                        download_link = f"http://yourserverip:8080/videos/{video_id}"
+                        await ctx.send(f"{ctx.author.mention} `Done | Download Link: {download_link}`")
 
                         # Remove the file after 1 minute if it exists
                         await asyncio.sleep(60)
@@ -93,7 +94,7 @@ class ConverterCog(commands.Cog):
 
         except Exception as e:
             error_message = str(e)
-            await ctx.send(f"{ctx.author.mention} `An error occurred during conversion. Please check the URL and try again.\nError details: {error_message}`")
+            await ctx.send(f"{ctx.author.mention} `An error occurred during conversion. {error_message}`")
 
     @commands.command()
     async def ytmp3(self, ctx, url):
