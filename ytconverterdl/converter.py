@@ -1,6 +1,8 @@
 import discord
 from redbot.core import commands
 from yt_dlp import YoutubeDL
+import aiohttp
+from aiohttp import web
 import asyncio
 from redbot.core import data_manager
 from pathlib import Path
@@ -9,6 +11,28 @@ class ConverterCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.data_folder = data_manager.cog_data_path(cog_instance=self)
+        self.app = web.Application()
+        self.app.router.add_route('GET', '/videos/{filename}', self.handle_video_request)
+        self.runner = web.AppRunner(self.app)
+        asyncio.create_task(self.start_server())
+
+    async def start_server(self):
+        await self.runner.setup()
+        site = web.TCPSite(self.runner, '0.0.0.0', 8080)  # Change the port as needed
+        await site.start()
+
+    async def handle_video_request(self, request):
+        filename = request.match_info['filename']
+        video_path = self.data_folder / filename
+        if video_path.exists():
+            with open(video_path, 'rb') as f:
+                response = web.StreamResponse()
+                response.content_type = 'video/mp4'  # Change the content type based on your file type
+                await response.prepare(request)
+                await response.write(f.read())
+                return response
+        else:
+            return web.Response(status=404)
 
     async def download_and_convert(self, ctx, url, to_mp3=False):
         try:
@@ -19,7 +43,8 @@ class ConverterCog(commands.Cog):
                 'outtmpl': str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}"),
             }
 
-            conversion_message = await ctx.send(f"`Downloading...`")
+            # Send "Converting..." message
+            conversion_message = await ctx.send(f"`Converting...`")
 
             with YoutubeDL(ydl_opts) as ydl:
                 info_dict = ydl.extract_info(url, download=False)
@@ -28,10 +53,7 @@ class ConverterCog(commands.Cog):
                     formats = info_dict['entries'][0].get('formats', [])
 
                     if formats:
-                        # Sort by quality
                         formats = sorted(formats, key=lambda x: x.get('height', float('inf')), reverse=True)
-
-                        # Find the first format with video
                         video_format = next((f for f in formats if 'height' in f), None)
 
                         if video_format:
@@ -40,11 +62,26 @@ class ConverterCog(commands.Cog):
 
                             ydl.download([url])
 
+                            # Update message to indicate uploading
                             await conversion_message.edit(content=f"`Uploading...`")
-                            # Send a new message with the converted file
-                            file_path = output_folder / f"{info_dict['entries'][0]['id']}.{'mp3' if to_mp3 else 'webm'}"
+                            video_id = info_dict['entries'][0]['id']
+                            file_path = output_folder / f"{video_id}.{'mp3' if to_mp3 else 'webm'}"
+
+                            # Check file size and duration
                             file_size = file_path.stat().st_size
-                            await ctx.send(f"{ctx.author.mention} `Done | Size: {file_size / (1024 * 1024):.2f} MB`", file=discord.File(str(file_path)))
+                            file_duration = info_dict['entries'][0].get('duration', 0)
+
+                            if file_size <= 250 * 1024 * 1024 and file_duration <= 900:  # 250 MB and 15 minutes
+                                # Serve the video using aiohttp
+                                download_link = f"http://yourserverip:8080/videos/{video_id}"
+                                await ctx.send(f"{ctx.author.mention} `Done | Download Link: {download_link}`")
+                            else:
+                                # File exceeds size limit
+                                await ctx.send(
+                                    f"{ctx.author.mention} `File exceeds size limit. Size: {file_size / (1024 * 1024):.2f} MB. Removing...`"
+                                )
+                                if file_path.exists():
+                                    file_path.unlink()
 
                             # Remove the file after 1 minute if it exists
                             await asyncio.sleep(60)
@@ -52,7 +89,6 @@ class ConverterCog(commands.Cog):
                                 file_path.unlink()
                             return
 
-            # If no suitable format found
             raise ValueError("No suitable format available for download.")
 
         except Exception as e:
@@ -61,20 +97,8 @@ class ConverterCog(commands.Cog):
 
     @commands.command()
     async def ytmp3(self, ctx, url):
-        """
-        Converts a YouTube video to MP3.
-
-        Parameters:
-        `<url>` The URL of the video you want to convert.
-        """
         await self.download_and_convert(ctx, url, to_mp3=True)
 
     @commands.command()
     async def ytmp4(self, ctx, url):
-        """
-        Converts a YouTube video to MP4.
-
-        Parameters:
-        `<url>` The URL of the video you want to convert.
-        """
         await self.download_and_convert(ctx, url, to_mp3=False)
