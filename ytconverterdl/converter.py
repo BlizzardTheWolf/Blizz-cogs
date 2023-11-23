@@ -14,25 +14,27 @@ class ConverterCog(commands.Cog):
         self.runner = aiohttp.web.AppRunner(self.app)
         self.hostname = "127.0.0.1"  # Set a default hostname
         self.port = 8080
-        asyncio.create_task(self.start_server())
+        self.is_server_running = False
+        self.start_server_task = None
 
     async def start_server(self):
         await self.bot.wait_until_ready()
 
-        # Ensure runner is set up
-        if not self.runner.is_setup():
-            await self.runner.setup()
+        if not self.is_server_running:
+            self.app.router.add_route('GET', '/videos/{filename}', self.handle_video_request)
+            site = aiohttp.web.TCPSite(self.runner, self.hostname, self.port)
 
-        self.app.router.add_route('GET', '/videos/{filename}', self.handle_video_request)
-        site = aiohttp.web.TCPSite(self.runner, self.hostname, self.port)
-        await site.start()
+            await self.runner.setup()
+            await site.start()
+
+            self.is_server_running = True
 
     async def handle_video_request(self, request):
         filename = request.match_info.get('filename', '')
         video_path = Path(self.data_folder) / filename
         if not video_path.is_file() or not video_path.parts[:len(Path(self.data_folder).parts)] == Path(self.data_folder).parts:
             raise aiohttp.web.HTTPNotFound()
-        
+
         with open(video_path, 'rb') as f:
             return aiohttp.web.Response(body=f.read(), content_type='audio/mpeg' if video_path.suffix == '.mp3' else 'video/mp4')
 
@@ -67,27 +69,43 @@ class ConverterCog(commands.Cog):
 
     @commands.command()
     async def ytcurl(self, ctx, filename):
-        if self.hostname is not None:
+        if self.is_server_running:
             download_url = await self.get_download_url(filename)
             await ctx.send(f"Download URL for {filename}: {download_url}")
         else:
-            await ctx.send("Web server is not configured. Set the hostname and port using the ytcset command.")
+            await ctx.send("Web server is not running. Start the server using the ytstart command.")
 
     @commands.command()
     async def ytcsettings(self, ctx):
         await ctx.send(f"Web server settings - Hostname: {self.hostname}, Port: {self.port}")
 
+    @commands.command()
+    @commands.is_owner()
+    async def ytstart(self, ctx):
+        if not self.is_server_running:
+            self.start_server_task = asyncio.create_task(self.start_server())
+            await ctx.send("Web server started.")
+        else:
+            await ctx.send("Web server is already running.")
+
+    @commands.command()
+    @commands.is_owner()
+    async def ytstop(self, ctx):
+        if self.is_server_running:
+            await self.stop_server()
+            await ctx.send("Web server stopped.")
+        else:
+            await ctx.send("Web server is not running.")
+
     async def get_download_url(self, filename):
-        if self.hostname is not None:
+        if self.is_server_running:
             return f"http://{self.hostname}:{self.port}/videos/{filename}"
         else:
             return None
 
-    def cog_unload(self):
-        asyncio.create_task(self.stop_server())
-
     async def stop_server(self):
         await self.runner.cleanup()
+        self.is_server_running = False
 
 def setup(bot):
     bot.add_cog(ConverterCog(bot))
