@@ -7,7 +7,7 @@ import asyncio
 from redbot.core import data_manager
 from pathlib import Path
 
-class ConverterCog(commands.Cog):
+class YTConverterCog(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.data_folder = data_manager.cog_data_path(cog_instance=self)
@@ -36,13 +36,13 @@ class ConverterCog(commands.Cog):
         else:
             return web.Response(status=404)
 
-    async def download_and_convert(self, ctx, url):
+    async def download_and_convert(self, ctx, url, to_mp3=False):
         try:
-            output_folder = self.data_folder / "mp4"
+            output_folder = self.data_folder / ("mp3" if to_mp3 else "mp4")
 
             ydl_opts = {
-                'format': 'bestvideo[height<=?1080]+bestaudio/best',
-                'outtmpl': str(output_folder / f"%(id)s.mp4"),
+                'format': 'bestvideo[height<=?1080]+bestaudio/best' if not to_mp3 else 'bestaudio/best',
+                'outtmpl': str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}"),
             }
 
             # Send "Converting..." message
@@ -52,14 +52,14 @@ class ConverterCog(commands.Cog):
                 info_dict = ydl.extract_info(url, download=False)
 
                 if 'entries' in info_dict:
-                    ydl_opts['outtmpl'] = str(output_folder / f"%(id)s.mp4")
+                    ydl_opts['outtmpl'] = str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}")
 
                     ydl.download([url])
 
                     # Update message to indicate uploading
                     await conversion_message.edit(content=f"`Uploading...`")
                     video_id = info_dict['entries'][0]['id']
-                    file_path = output_folder / f"{video_id}.mp4"
+                    file_path = output_folder / f"{video_id}.{'mp3' if to_mp3 else 'webm'}"
 
                     # Serve the video using aiohttp
                     download_link = f"http://{self.hostname}:{self.port}/videos/{video_id}"
@@ -78,6 +78,26 @@ class ConverterCog(commands.Cog):
             await ctx.send(f"{ctx.author.mention} `An error occurred during conversion. {error_message}`")
 
     @commands.command()
+    async def ytmp3(self, ctx, url):
+        """
+        Converts a YouTube video to MP3.
+
+        Parameters:
+        `<url>` The URL of the video you want to convert.
+        """
+        await self.download_and_convert(ctx, url, to_mp3=True)
+
+    @commands.command()
+    async def ytmp4(self, ctx, url):
+        """
+        Converts a YouTube video to MP4.
+
+        Parameters:
+        `<url>` The URL of the video you want to convert.
+        """
+        await self.download_and_convert(ctx, url, to_mp3=False)
+
+    @commands.command()
     @commands.is_owner()
     async def ytcset(self, ctx, hostname: str, port: int = 8080):
         """
@@ -86,13 +106,6 @@ class ConverterCog(commands.Cog):
         self.hostname = hostname
         self.port = port
         await ctx.send(f"Hostname set to {hostname}, Port set to {port}")
-
-    @commands.command()
-    async def ytc(self, ctx, url):
-        """
-        Convert a YouTube video to MP4 with highest resolution.
-        """
-        await self.download_and_convert(ctx, url)
 
     @commands.command()
     async def ytcurl(self, ctx, video_id):
