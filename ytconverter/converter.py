@@ -1,11 +1,9 @@
 import discord
 from redbot.core import commands
-from pytube import YouTube
+from yt_dlp import YoutubeDL
 import asyncio
-import time
-import os
 from redbot.core import data_manager
-import shutil
+from pathlib import Path
 
 class ConverterCog(commands.Cog):
     def __init__(self, bot):
@@ -14,71 +12,68 @@ class ConverterCog(commands.Cog):
 
     async def download_and_convert(self, ctx, url, to_mp3=False):
         try:
-            yt = YouTube(url)
+            output_folder = self.data_folder / ("mp3" if to_mp3 else "mp4")
 
-            if yt.age_restricted:
-                await ctx.send("This video is age-restricted and cannot be converted.")
-                return
+            ydl_opts = {
+                'format': 'bestaudio/best' if to_mp3 else 'bestvideo+bestaudio/best',
+                'outtmpl': str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}"),
+            }
 
-            stream = yt.streams.filter(only_audio=to_mp3).first() if to_mp3 else yt.streams.filter(progressive=True, file_extension="mp4").order_by('resolution').desc().first()
+            conversion_message = await ctx.send(f"`Converting video...`")
 
-            if not stream:
-                await ctx.send("Could not find a suitable stream for download.")
-                return
+            with YoutubeDL(ydl_opts) as ydl:
+                info_dict = ydl.extract_info(url, download=False)
 
-            duration = yt.length
+                if 'entries' in info_dict:
+                    video_info = info_dict['entries'][0]
+                else:
+                    video_info = info_dict
 
-            if to_mp3:
-                output_ext = ".mp3"
-                output_folder = self.data_folder / "mp3"
-            else:
-                output_ext = ".mp4"
-                output_folder = self.data_folder / "mp4"
-
-            if duration > 900:
-                await ctx.send("Video exceeds the maximum time limit of 15 minutes.")
-                return
-
-            await ctx.send(f"Converting the video to {output_ext}, please wait...")
-
-            # Generate a unique filename with timestamp
-            video_code = str(int(time.time())) + output_ext
-            video_path = output_folder / video_code
-
-            stream.download(output_path=str(output_folder), filename=video_code)
+                ydl.download([url])
 
             await asyncio.sleep(5)
 
             user = ctx.message.author
-            await ctx.send(f'{user.mention}, your video conversion to {output_ext} is complete. Here is the converted file:',
-               file=discord.File(str(video_path)))
+            downloaded_file_path = output_folder / f"{video_info['id']}.{'mp3' if to_mp3 else 'webm'}"
+            renamed_file_path = output_folder / f"{video_info['id']}.{'mp3' if to_mp3 else 'mp4'}"
 
-            # Remove the file after 10 minutes
-            await asyncio.sleep(600)
-            video_path.unlink()
+            downloaded_file_path.rename(renamed_file_path)
 
+            # Try uploading the file
+            try:
+                await conversion_message.edit(content=f"`Uploading video...`")
+                # Send a new message with the converted file, mentioning the user
+                await ctx.send(f'{user.mention}, `Here is the converted video:`',
+                               file=discord.File(str(renamed_file_path)))
+                await conversion_message.edit(content=f"`Video uploaded successfully.`")
+            except discord.errors.HTTPException as upload_error:
+                # If uploading fails, send an error message
+                await ctx.send(f"`An error occurred during upload. Please check the file and try again.\nError details: {upload_error}`")
+
+            # Remove the file after 10 minutes if it exists
+            if renamed_file_path.exists():
+                renamed_file_path.unlink()
         except Exception as e:
             error_message = str(e)
-            await ctx.send(f"An error occurred during conversion. Please check the URL and try again.\nError details: {error_message}")
-            
+            await ctx.send(f"`An error occurred during conversion. Please check the URL and try again.\nError details: {error_message}`")
+
     @commands.command()
     async def ytmp3(self, ctx, url):
         """
         Converts a YouTube video to MP3.
-    
+
         Parameters:
-        `<url>` The url of the video you want to convert.
+        `<url>` The URL of the video you want to convert.
         """
         await self.download_and_convert(ctx, url, to_mp3=True)
-    
+
     @commands.command()
     async def ytmp4(self, ctx, url):
         """
         Converts a YouTube video to MP4.
 
-        **Parameters:**
-        `<url>` The url of the video you want to convert.
-    
+        Parameters:
+        `<url>` The URL of the video you want to convert.
         """
         await self.download_and_convert(ctx, url, to_mp3=False)
-    
+
