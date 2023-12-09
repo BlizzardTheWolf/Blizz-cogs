@@ -49,10 +49,23 @@ class ConverterCog(commands.Cog):
                     )
 
                 try:
-                    interaction = await self.bot.wait_for("select_option", check=check, timeout=120)
-                    selected_format = interaction.values[0]
+                    interaction = await self.bot.wait_for(
+                        "select_option", check=check, timeout=120
+                    )
+                    selected_format = next(
+                        (
+                            option
+                            for option in formats
+                            if option.value == interaction.values[0]
+                        ),
+                        None,
+                    )
                 except asyncio.TimeoutError:
                     await ctx.send("`Selection timeout. Please try the command again.`")
+                    return
+
+                if not selected_format:
+                    await ctx.send("`Invalid selection. Please try the command again.`")
                     return
 
                 # Use selected_format to get the selected format
