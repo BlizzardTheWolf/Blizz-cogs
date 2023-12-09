@@ -34,13 +34,22 @@ class ConverterCog(commands.Cog):
                 view = discord.ui.View()
                 quality_view = discord.ui.Select(
                     placeholder="Quality options",
-                    options=formats
+                    options=formats,
+                    custom_id="quality_select"
                 )
                 view.add_item(quality_view)
 
                 message = await ctx.send("Please select the preferred video quality:", view=view)  # Post message with dropdown
+
+                def check(interaction):
+                    return (
+                        interaction.custom_id == "quality_select"
+                        and interaction.message.id == message.id
+                        and interaction.user.id == ctx.author.id
+                    )
+
                 try:
-                    interaction = await self.bot.wait_for("select_option", check=lambda i: i.custom_id == quality_view.custom_id, timeout=120)
+                    interaction = await self.bot.wait_for("select_option", check=check, timeout=120)
                     selected_format = interaction.values[0]
                 except asyncio.TimeoutError:
                     await ctx.send("`Selection timeout. Please try the command again.`")
