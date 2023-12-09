@@ -23,8 +23,13 @@ class ConverterCog(commands.Cog):
 
             with YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
-                formats = info['formats']
-                
+                formats = [
+                    discord.SelectOption(
+                        label=f"{format['format_id']} - {format['resolution']}",
+                        value=format['format_id']
+                    ) for format in info['formats']
+                ]
+
                 # Create a View and add the Select component to it
                 view = discord.ui.View()
                 quality_view = discord.ui.Select(
