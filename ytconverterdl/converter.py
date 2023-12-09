@@ -25,11 +25,17 @@ class ConverterCog(commands.Cog):
                 info = ydl.extract_info(url, download=False)
                 formats = info['formats']
                 quality_view = discord.SelectMenu(
-                    placeholder = "Quality options",
-                    options = formats
+                    placeholder="Quality options",
+                    options=[
+                        discord.SelectOption(label=f"{format_['format_id']} - {format_['ext']}", value=format_['format_id'])
+                        for format_ in formats
+                    ]
                 )
-                message = await ctx.send("Please select the preferred video quality:", view=quality_view)  # Post message with dropdown
-                selected_format = await quality_view.wait()
+                view = discord.ui.View()
+                view.add_item(quality_view)
+                message = await ctx.send("Please select the preferred video quality:", view=view)  # Post message with dropdown
+
+                selected_format = await view.wait()
                 await asyncio.sleep(120)
 
                 ydl_opts['format'] = selected_format  # Update the format based on user selection
@@ -43,7 +49,7 @@ class ConverterCog(commands.Cog):
             user = ctx.message.author
             downloaded_file_path = output_folder / f"{info['id']}.{'mp3' if to_mp3 else 'webm'}"
             renamed_file_path = output_folder / f"{info['id']}.{'mp3' if to_mp3 else 'mp4'}"
-            
+
             # Try uploading the file
             try:
                 await conversion_message.edit(content=f"`Uploading video...`")
