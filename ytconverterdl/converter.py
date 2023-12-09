@@ -41,14 +41,11 @@ class ConverterCog(commands.Cog):
                 message = await ctx.send("Please select the preferred video quality:", view=discord.ui.View().add_item(quality_view))
 
                 # Wait for the interaction
-                interaction = await self.bot.wait_for(
-                    "select_option",
-                    check=lambda inter: inter.custom_id == "quality_select" and inter.message.id == message.id,
-                    timeout=120
-                )
+                interaction_check = lambda inter: inter.custom_id == "quality_select" and inter.message.id == message.id
+                interaction = await self.bot.wait_for("select_option", check=interaction_check, timeout=120)
 
                 # Respond to the interaction
-                await interaction.response.defer()  # Defer the response
+                await interaction.defer()
 
                 selected_format = next(
                     (option for option in formats if option.value == interaction.values[0]),
@@ -56,10 +53,10 @@ class ConverterCog(commands.Cog):
                 )
 
                 if not selected_format:
-                    await interaction.response.send_message("`Invalid selection. Please try the command again.`")
+                    await interaction.send("`Invalid selection. Please try the command again.`")
                     return
 
-                await interaction.response.send_message(f"`Converting video to {selected_format.label}...`")
+                await interaction.send(f"`Converting video to {selected_format.label}...`")
 
                 ydl.download([url])
 
