@@ -24,9 +24,12 @@ class ConverterCog(commands.Cog):
             with YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
                 formats = info['formats']
+                options = [discord.SelectOption(label=format['format_note'], value=str(format['format_id'])) for format in formats]
                 quality_view = discord.ui.Select(
-                    placeholder = "Quality options",
-                    options = formats
+                    placeholder="Quality options",
+                    options=options
+                )
+
                 )
                 message = await ctx.send("Please select the preferred video quality:", view=quality_view)  # Post message with dropdown
                 selected_format = await quality_view.wait()
