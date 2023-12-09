@@ -47,7 +47,9 @@ class ConverterCog(commands.Cog):
                     timeout=120
                 )
 
-                # Process the selected option
+                # Respond to the interaction
+                await interaction.response.defer()  # Defer the response
+
                 selected_format = next(
                     (option for option in formats if option.value == interaction.values[0]),
                     None
@@ -57,9 +59,6 @@ class ConverterCog(commands.Cog):
                     await interaction.response.send_message("`Invalid selection. Please try the command again.`")
                     return
 
-                # Use selected_format to get the selected format
-                ydl_opts['format'] = selected_format.value if isinstance(selected_format, discord.SelectOption) else selected_format
-                await interaction.response.defer()  # Defer the response
                 await interaction.response.send_message(f"`Converting video to {selected_format.label}...`")
 
                 ydl.download([url])
