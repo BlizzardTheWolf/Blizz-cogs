@@ -30,77 +30,61 @@ class ConverterCog(commands.Cog):
                     ) for format in info['formats']
                 ]
 
-                # Create a View and add the Select component to it
-                view = discord.ui.View()
+                # Create a Select component
                 quality_view = discord.ui.Select(
                     placeholder="Quality options",
                     options=formats,
                     custom_id="quality_select"
                 )
-                view.add_item(quality_view)
 
-                message = await ctx.send("Please select the preferred video quality:", view=view)  # Post message with dropdown
+                # Create a message with the Select component
+                message = await ctx.send("Please select the preferred video quality:", view=discord.ui.View().add_item(quality_view))
 
-                def check(inter):
-                    return (
-                        inter.custom_id.lower() == "quality_select"
-                        and inter.message.id == message.id
-                        and inter.user.id == ctx.author.id
-                    )
+                # Wait for the interaction
+                interaction = await self.bot.wait_for(
+                    "select_option",
+                    check=lambda inter: inter.custom_id == "quality_select" and inter.message.id == message.id,
+                    timeout=120
+                )
 
-                interaction = None  # Define interaction outside of try block
+                # Process the selected option
+                selected_format = next(
+                    (option for option in formats if option.value == interaction.values[0]),
+                    None
+                )
 
-                await asyncio.sleep(1)  # Small delay to ensure interaction is created
+                if not selected_format:
+                    await interaction.response.send_message("`Invalid selection. Please try the command again.`")
+                    return
 
+                # Use selected_format to get the selected format
+                ydl_opts['format'] = selected_format.value if isinstance(selected_format, discord.SelectOption) else selected_format
+                await interaction.response.defer()  # Defer the response
+                await interaction.response.send_message(f"`Converting video to {selected_format.label}...`")
+
+                ydl.download([url])
+
+                user = ctx.message.author
+                downloaded_file_path = output_folder / f"{info['id']}.{'mp3' if to_mp3 else 'webm'}"
+                renamed_file_path = output_folder / f"{info['id']}.{'mp3' if to_mp3 else 'mp4'}"
+
+                # Try uploading the file
                 try:
-                    interaction = await self.bot.wait_for(
-                        "select_option", check=check, timeout=120
-                    )
-                    selected_format = next(
-                        (
-                            option
-                            for option in formats
-                            if option.value == interaction.values[0]
-                        ),
-                        None,
-                    )
+                    await conversion_message.edit(content=f"`Uploading video...`")
+                    # Send a new message with the converted file, mentioning the user
+                    await ctx.send(f'{user.mention}, `Here is the converted video:`',
+                                   file=discord.File(str(renamed_file_path)))
+                    await conversion_message.edit(content=f"`Video uploaded successfully.`")
+                except discord.errors.HTTPException as upload_error:
+                    # If uploading fails, send an error message
+                    await ctx.send(f"`An error occurred during upload. Please check the file and try again.\nError details: {upload_error}`")
 
-                    if not selected_format:
-                        await interaction.response.send_message("`Invalid selection. Please try the command again.`")
-                        return
+                # Remove the file after 10 minutes if it exists
+                if renamed_file_path.exists():
+                    renamed_file_path.unlink()
 
-                    # Use selected_format to get the selected format
-                    ydl_opts['format'] = selected_format.value if isinstance(selected_format, discord.SelectOption) else selected_format
-                    await interaction.response.defer()  # Defer the response
-                    await interaction.response.send_message(f"`Converting video to {selected_format.label}...`")
-
-                    ydl.download([url])
-
-                    user = ctx.message.author
-                    downloaded_file_path = output_folder / f"{info['id']}.{'mp3' if to_mp3 else 'webm'}"
-                    renamed_file_path = output_folder / f"{info['id']}.{'mp3' if to_mp3 else 'mp4'}"
-
-                    # Try uploading the file
-                    try:
-                        await conversion_message.edit(content=f"`Uploading video...`")
-                        # Send a new message with the converted file, mentioning the user
-                        await ctx.send(f'{user.mention}, `Here is the converted video:`',
-                                       file=discord.File(str(renamed_file_path)))
-                        await conversion_message.edit(content=f"`Video uploaded successfully.`")
-                    except discord.errors.HTTPException as upload_error:
-                        # If uploading fails, send an error message
-                        await ctx.send(f"`An error occurred during upload. Please check the file and try again.\nError details: {upload_error}`")
-
-                    # Remove the file after 10 minutes if it exists
-                    if renamed_file_path.exists():
-                        renamed_file_path.unlink()
-
-                except asyncio.TimeoutError:
-                    if interaction:
-                        await interaction.response.send_message("`Selection timeout. Please try the command again.`")
-                    else:
-                        await ctx.send("`Selection timeout. Please try the command again.`")
-
+        except asyncio.TimeoutError:
+            await ctx.send("`Selection timeout. Please try the command again.`")
         except Exception as e:
             error_message = str(e)
             await ctx.send(f"`An error occurred during conversion. Please check the URL and try again.\nError details: {error_message}`")
