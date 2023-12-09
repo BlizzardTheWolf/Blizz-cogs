@@ -43,7 +43,7 @@ class ConverterCog(commands.Cog):
 
                 def check(interaction):
                     return (
-                        interaction.custom_id == "quality_select"
+                        interaction.custom_id.lower() == "quality_select"
                         and interaction.message.id == message.id
                         and interaction.user.id == ctx.author.id
                     )
@@ -56,8 +56,7 @@ class ConverterCog(commands.Cog):
                     return
 
                 # Use selected_format to get the selected format
-                ydl_opts['format'] = selected_format  # Update the format based on user selection
-
+                ydl_opts['format'] = selected_format.value if isinstance(selected_format, discord.SelectOption) else selected_format
                 await message.edit(content=f"`Converting video to {selected_format}...`")
 
                 ydl.download([url])
