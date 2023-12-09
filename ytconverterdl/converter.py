@@ -45,7 +45,7 @@ class ConverterCog(commands.Cog):
                 interaction = await self.bot.wait_for("select_option", check=interaction_check, timeout=120)
 
                 # Respond to the interaction
-                await interaction.defer()
+                await interaction.response.defer()
 
                 selected_format = next(
                     (option for option in formats if option.value == interaction.values[0]),
@@ -53,10 +53,10 @@ class ConverterCog(commands.Cog):
                 )
 
                 if not selected_format:
-                    await interaction.send("`Invalid selection. Please try the command again.`")
+                    await interaction.response.send_message("`Invalid selection. Please try the command again.`")
                     return
 
-                await interaction.send(f"`Converting video to {selected_format.label}...`")
+                await interaction.response.send_message(f"`Converting video to {selected_format.label}...`")
 
                 ydl.download([url])
 
