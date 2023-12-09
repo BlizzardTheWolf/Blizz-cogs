@@ -86,19 +86,9 @@ class ConverterCog(commands.Cog):
             await ctx.send(f"`An error occurred during conversion. Please check the URL and try again.\nError details: {error_message}`")
 
     @commands.command()
-    async def ytmp3(self, ctx, url):
+    async def convert(self, ctx, url):
         """
-        Converts a YouTube video to MP3.
-
-        Parameters:
-        `<url>` The URL of the video you want to convert.
-        """
-        await self.download_and_convert_with_dropdown(ctx, url, to_mp3=True)
-
-    @commands.command()
-    async def ytmp4(self, ctx, url):
-        """
-        Converts a YouTube video to MP4.
+        Converts a YouTube video to MP4 or MP3.
 
         Parameters:
         `<url>` The URL of the video you want to convert.
