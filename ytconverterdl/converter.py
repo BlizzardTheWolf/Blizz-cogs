@@ -60,6 +60,7 @@ class ConverterCog(commands.Cog):
                         ),
                         None,
                     )
+                    await interaction.response.send_message(f"Option selected: {selected_format.label}")  # Add this line
                 except asyncio.TimeoutError:
                     await ctx.send("`Selection timeout. Please try the command again.`")
                     return
