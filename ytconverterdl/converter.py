@@ -1,5 +1,5 @@
 import discord
-from redbot.core import commands
+from discord.ext import commands
 from yt_dlp import YoutubeDL
 import asyncio
 from redbot.core import data_manager
@@ -24,14 +24,18 @@ class ConverterCog(commands.Cog):
             with YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
                 formats = info['formats']
-                quality_view = discord.SelectMenu(
-                    placeholder = "Quality options",
-                    options = formats
+                
+                options = [discord.SelectOption(label=format['format_note'], value=str(format['format_id'])) for format in formats]
+                quality_view = discord.ui.Select(
+                    placeholder="Quality options",
+                    options=options
                 )
+
                 message = await ctx.send("Please select the preferred video quality:", view=quality_view)  # Post message with dropdown
-                selected_format = await quality_view.wait()
+                await quality_view.wait()
                 await asyncio.sleep(120)
 
+                selected_format = quality_view.values[0]
                 ydl_opts['format'] = selected_format  # Update the format based on user selection
 
                 await message.edit(content=f"`Converting video to {selected_format}...`")
@@ -43,7 +47,7 @@ class ConverterCog(commands.Cog):
             user = ctx.message.author
             downloaded_file_path = output_folder / f"{info['id']}.{'mp3' if to_mp3 else 'webm'}"
             renamed_file_path = output_folder / f"{info['id']}.{'mp3' if to_mp3 else 'mp4'}"
-            
+
             # Try uploading the file
             try:
                 await conversion_message.edit(content=f"`Uploading video...`")
@@ -81,3 +85,6 @@ class ConverterCog(commands.Cog):
         `<url>` The URL of the video you want to convert.
         """
         await self.download_and_convert_with_dropdown(ctx, url, to_mp3=False)
+
+def setup(bot):
+    bot.add_cog(ConverterCog(bot))
