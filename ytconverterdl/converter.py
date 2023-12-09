@@ -37,9 +37,10 @@ class ConverterCog(commands.Cog):
                 selected_format = await view.wait()
                 await asyncio.sleep(120)
 
-                ydl_opts['format'] = selected_format  # Update the format based on user selection
+                # Use selected_format.value to get the selected format
+                ydl_opts['format'] = selected_format.value  # Update the format based on user selection
 
-                await message.edit(content=f"`Converting video to {selected_format}...`")
+                await message.edit(content=f"`Converting video to {selected_format.value}...`")
 
                 ydl.download([url])
 
