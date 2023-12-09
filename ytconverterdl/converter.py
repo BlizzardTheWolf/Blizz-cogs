@@ -45,6 +45,8 @@ class ConverterCog(commands.Cog):
                 interaction = await self.bot.wait_for("select_option", check=interaction_check, timeout=120)
 
                 # Respond to the interaction
+                await interaction.response.defer()
+
                 selected_format = next(
                     (option for option in formats if option.value == interaction.values[0]),
                     None
