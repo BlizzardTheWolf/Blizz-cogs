@@ -48,6 +48,8 @@ class ConverterCog(commands.Cog):
                         and interaction.user.id == ctx.author.id
                     )
 
+                interaction = None  # Define interaction outside of try block
+
                 try:
                     interaction = await self.bot.wait_for(
                         "select_option", check=check, timeout=120
@@ -92,7 +94,10 @@ class ConverterCog(commands.Cog):
                         renamed_file_path.unlink()
 
                 except asyncio.TimeoutError:
-                    await interaction.response.send_message("`Selection timeout. Please try the command again.`")
+                    if interaction:
+                        await interaction.response.send_message("`Selection timeout. Please try the command again.`")
+                    else:
+                        await ctx.send("`Selection timeout. Please try the command again.`")
                     return
 
         except Exception as e:
