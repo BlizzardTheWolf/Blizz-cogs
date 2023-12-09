@@ -39,13 +39,17 @@ class ConverterCog(commands.Cog):
                 view.add_item(quality_view)
 
                 message = await ctx.send("Please select the preferred video quality:", view=view)  # Post message with dropdown
-                selected_format = await view.wait()
-                await asyncio.sleep(120)
+                try:
+                    interaction = await self.bot.wait_for("select_option", check=lambda i: i.custom_id == quality_view.custom_id, timeout=120)
+                    selected_format = interaction.values[0]
+                except asyncio.TimeoutError:
+                    await ctx.send("`Selection timeout. Please try the command again.`")
+                    return
 
-                # Use selected_format.value to get the selected format
-                ydl_opts['format'] = selected_format.value  # Update the format based on user selection
+                # Use selected_format to get the selected format
+                ydl_opts['format'] = selected_format  # Update the format based on user selection
 
-                await message.edit(content=f"`Converting video to {selected_format.value}...`")
+                await message.edit(content=f"`Converting video to {selected_format}...`")
 
                 ydl.download([url])
 
