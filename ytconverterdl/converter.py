@@ -24,12 +24,14 @@ class ConverterCog(commands.Cog):
             with YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=False)
                 formats = info['formats']
-                quality_dropdown = create_dropdown(formats)  # Create a dropdown with available qualities
-                message = await ctx.send("Please select the preferred video quality:", view=quality_dropdown)  # Post message with dropdown
+                quality_view = discord.SelectMenu(
+                    placeholder = "Quality options",
+                    options = formats
+                )
+                message = await ctx.send("Please select the preferred video quality:", view=quality_view)  # Post message with dropdown
+                selected_format = await quality_view.wait()
                 await asyncio.sleep(120)
-                quality_dropdown.stop()  # Remove the dropdown after 2 minutes
 
-                selected_format = quality_dropdown.selected_options[0]
                 ydl_opts['format'] = selected_format  # Update the format based on user selection
 
                 await message.edit(content=f"`Converting video to {selected_format}...`")
