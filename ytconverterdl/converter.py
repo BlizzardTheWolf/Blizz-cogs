@@ -67,6 +67,7 @@ class ConverterCog(commands.Cog):
 
                     # Use selected_format to get the selected format
                     ydl_opts['format'] = selected_format.value if isinstance(selected_format, discord.SelectOption) else selected_format
+                    await interaction.response.defer()  # Defer the response
                     await interaction.response.send_message(f"`Converting video to {selected_format.label}...`")
 
                     ydl.download([url])
