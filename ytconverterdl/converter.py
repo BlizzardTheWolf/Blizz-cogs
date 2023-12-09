@@ -41,14 +41,16 @@ class ConverterCog(commands.Cog):
 
                 message = await ctx.send("Please select the preferred video quality:", view=view)  # Post message with dropdown
 
-                def check(interaction):
+                def check(inter):
                     return (
-                        interaction.custom_id.lower() == "quality_select"
-                        and interaction.message.id == message.id
-                        and interaction.user.id == ctx.author.id
+                        inter.custom_id.lower() == "quality_select"
+                        and inter.message.id == message.id
+                        and inter.user.id == ctx.author.id
                     )
 
                 interaction = None  # Define interaction outside of try block
+
+                await asyncio.sleep(1)  # Small delay to ensure interaction is created
 
                 try:
                     interaction = await self.bot.wait_for(
@@ -77,7 +79,7 @@ class ConverterCog(commands.Cog):
                     user = ctx.message.author
                     downloaded_file_path = output_folder / f"{info['id']}.{'mp3' if to_mp3 else 'webm'}"
                     renamed_file_path = output_folder / f"{info['id']}.{'mp3' if to_mp3 else 'mp4'}"
-                    
+
                     # Try uploading the file
                     try:
                         await conversion_message.edit(content=f"`Uploading video...`")
@@ -98,7 +100,6 @@ class ConverterCog(commands.Cog):
                         await interaction.response.send_message("`Selection timeout. Please try the command again.`")
                     else:
                         await ctx.send("`Selection timeout. Please try the command again.`")
-                    return
 
         except Exception as e:
             error_message = str(e)
