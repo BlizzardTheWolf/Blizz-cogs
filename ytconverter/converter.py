@@ -15,8 +15,8 @@ class ConverterCog(commands.Cog):
             output_folder = self.data_folder / ("mp3" if to_mp3 else "mp4")
 
             ydl_opts = {
-                'format': 'bestaudio/best' if to_mp3 else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]',
-                'outtmpl': str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'webm'}"),
+                'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+                'outtmpl': str(output_folder / f"%(id)s.mp4"),
             }
 
             conversion_message = await ctx.send(f"`Converting video...`")
@@ -34,8 +34,8 @@ class ConverterCog(commands.Cog):
             await asyncio.sleep(5)
 
             user = ctx.message.author
-            downloaded_file_path = output_folder / f"{video_info['id']}.{'mp3' if to_mp3 else 'webm'}"
-            renamed_file_path = output_folder / f"{video_info['id']}.{'mp3' if to_mp3 else 'mp4'}"
+            downloaded_file_path = output_folder / f"{video_info['id']}.mp4"
+            renamed_file_path = output_folder / f"{video_info['id']}.mp4"
 
             # Check if the downloaded file exists before renaming
             if downloaded_file_path.exists():
@@ -81,3 +81,6 @@ class ConverterCog(commands.Cog):
         `<url>` The URL of the video you want to convert.
         """
         await self.download_and_convert(ctx, url, to_mp3=False)
+
+# Add this cog to your bot
+bot.add_cog(ConverterCog(bot))
