@@ -17,6 +17,7 @@ class ConverterCog(commands.Cog):
             ydl_opts = {
                 'format': 'bestaudio/best' if to_mp3 else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
                 'outtmpl': str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'mp4'}"),
+                'default_search': 'auto',  # Set default search
             }
 
             conversion_message = await ctx.send(f"`Converting video...`")
@@ -63,21 +64,21 @@ class ConverterCog(commands.Cog):
             await ctx.send(f"`An error occurred during conversion. Please check the URL and try again.\nError details: {error_message}`")
 
     @commands.command()
-    async def ytmp3(self, ctx, url):
+    async def ytmp3(self, ctx, *, query):
         """
         Converts a YouTube video to MP3.
 
         Parameters:
-        `<url>` The URL of the video you want to convert.
+        `<query>` The search query or URL of the video you want to convert.
         """
-        await self.download_and_convert(ctx, url, to_mp3=True)
+        await self.download_and_convert(ctx, query, to_mp3=True)
 
     @commands.command()
-    async def ytmp4(self, ctx, url):
+    async def ytmp4(self, ctx, *, query):
         """
         Converts a YouTube video to MP4.
 
         Parameters:
-        `<url>` The URL of the video you want to convert.
+        `<query>` The search query or URL of the video you want to convert.
         """
-        await self.download_and_convert(ctx, url, to_mp3=False)
+        await self.download_and_convert(ctx, query, to_mp3=False)
