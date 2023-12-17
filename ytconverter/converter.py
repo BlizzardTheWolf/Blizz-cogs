@@ -17,6 +17,7 @@ class ConverterCog(commands.Cog):
             ydl_opts = {
                 'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
                 'outtmpl': str(output_folder / f"%(id)s.mp4"),
+                'default_search': 'auto',  # Enable search
             }
 
             conversion_message = await ctx.send(f"`Converting video...`")
