@@ -81,6 +81,3 @@ class ConverterCog(commands.Cog):
         `<url>` The URL of the video you want to convert.
         """
         await self.download_and_convert(ctx, url, to_mp3=False)
-
-# Add this cog to your bot
-bot.add_cog(ConverterCog(bot))
