@@ -18,25 +18,20 @@ class ConverterCog(commands.Cog):
                 'format': 'bestaudio/best' if to_mp3 else 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
                 'outtmpl': str(output_folder / f"%(id)s.{'mp3' if to_mp3 else 'mp4'}"),
                 'default_search': 'auto',  # Set default search
+                'progress_hooks': [self.my_hook],  # Add progress hook
             }
 
             conversion_message = await ctx.send(f"`Converting video...`")
 
             with YoutubeDL(ydl_opts) as ydl:
-                info_dict = ydl.extract_info(url, download=False)
-
-                if 'entries' in info_dict:
-                    video_info = info_dict['entries'][0]
-                else:
-                    video_info = info_dict
-
                 ydl.download([url])
 
+            # Wait for the download and conversion to complete
             await asyncio.sleep(5)
 
             user = ctx.message.author
-            downloaded_file_path = output_folder / f"{video_info['id']}.{'mp3' if to_mp3 else 'mp4'}"
-            renamed_file_path = output_folder / f"{video_info['id']}.{'mp3' if to_mp3 else 'mp4'}"
+            downloaded_file_path = output_folder / f"{ydl.extract_info(url)['id']}.{'mp3' if to_mp3 else 'mp4'}"
+            renamed_file_path = output_folder / f"{ydl.extract_info(url)['id']}.{'mp3' if to_mp3 else 'mp4'}"
 
             # Check if the downloaded file exists before renaming
             if downloaded_file_path.exists():
@@ -62,6 +57,10 @@ class ConverterCog(commands.Cog):
         except Exception as e:
             error_message = str(e)
             await ctx.send(f"`An error occurred during conversion. Please check the URL and try again.\nError details: {error_message}`")
+
+    def my_hook(self, d):
+        if d['status'] == 'finished':
+            print('Done downloading, now converting...')
 
     @commands.command()
     async def ytmp3(self, ctx, *, query):
