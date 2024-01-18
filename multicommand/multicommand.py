@@ -8,7 +8,7 @@ class MultiCommand(commands.Cog):
     
     @commands.Cog.listener()
     async def on_message(self, message):
-        if not message.content.startswith(">"):
+        if not message.content.startswith(";"):
             return
         prefix = (await self.bot.get_valid_prefixes(message.guild))[0]
         raw = message.content[1:]
