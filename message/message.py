@@ -28,7 +28,7 @@ class MessageCog(commands.Cog):
                     # If embed=False, send the message as plain text
                     await user.send(message_content)
 
-                await ctx.send(f"Message sent to {user.mention} successfully: {message_content}")
+                await ctx.send(f"Message sent to {user.mention} successfully.")
             else:
                 await ctx.send("You need to mention a user to send a message to.")
         except Exception as e:
