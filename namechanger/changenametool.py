@@ -10,4 +10,4 @@ class ChangeName(commands.Cog):
             await ctx.author.edit(nick=new_name)
             await ctx.send(f"Your nickname has been changed to '{new_name}'")
         except commands.MissingPermissions:
-            await ctx.send("Sorry, you don't have permission to change your nickname.")
+            await ctx.send("Sorry, I don't have permission to change your nickname.")
