@@ -8,7 +8,7 @@ class MessageCog(commands.Cog):
         self.bot = bot
 
     @commands.command()
-    @commands.has_permissions(manage_messages=True)
+    @redbot.core.commands.mod()
     async def message(self, ctx, user: discord.User, embed: bool = True, *, message_content):
         """
         Send a message to a user via DM through the bot.
