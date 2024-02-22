@@ -18,6 +18,3 @@ class UwuCog(commands.Cog):
                 uwu_message += f"::{part}::"
         
         await ctx.send(uwu_message)
-
-def setup(bot):
-    bot.add_cog(UwuCog(bot))
