@@ -1,0 +1,10 @@
+{
+    "author": ["you"],
+    "min_bot_version": "3.5.0",
+    "description": "Scans messages with a local AI model for safety-relevant content (sexual, hate, violence, harassment, self-harm) and reports or auto-acts based on configurable thresholds.",
+    "install_msg": "Thanks for installing! Run `[p]load moderationcog` then `[p]modai enable` and `[p]modai channel #your-report-channel` to get started. Note: `transformers` and `torch` must be installed in Red's environment first (see README).",
+    "requirements": ["transformers", "torch"],
+    "short": "Local-AI message moderation with soft/hard thresholds.",
+    "tags": ["moderation", "ai", "safety", "automod"],
+    "type": "COG"
+}
